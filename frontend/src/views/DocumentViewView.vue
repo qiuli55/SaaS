@@ -12,6 +12,7 @@
       <div class="flex space-x-2">
         <button @click="copyContent" class="btn-secondary text-sm">{{ copied ? '已复制' : '复制文本' }}</button>
         <button @click="downloadWord" class="btn-primary text-sm">下载 Word</button>
+        <button @click="downloadPdf" class="btn-primary text-sm">下载 PDF</button>
       </div>
     </div>
 
@@ -74,6 +75,10 @@ function copyContent() {
 
 function downloadWord() {
   window.open(`/api/documents/${docId}/download/docx`, '_blank')
+}
+
+function downloadPdf() {
+  window.open(`/api/documents/${docId}/download/pdf`, '_blank')
 }
 
 function formatDate(d) {

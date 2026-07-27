@@ -76,6 +76,7 @@
         <div class="flex space-x-2">
           <button @click="copyContent" class="btn-secondary text-sm">{{ copied ? '已复制' : '复制文本' }}</button>
           <button @click="downloadWord(result.id)" class="btn-primary text-sm">下载 Word</button>
+          <button @click="downloadPdf(result.id)" class="btn-primary text-sm">下载 PDF</button>
         </div>
       </div>
 

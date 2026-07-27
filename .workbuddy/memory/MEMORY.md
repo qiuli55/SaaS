@@ -17,6 +17,9 @@
 - npm 需配代理 http://127.0.0.1:7892，registry 用 npmmirror.com（npmjs.org 太慢 ~90s/包）
 - npm install 必须用 dangerouslyDisableSandbox: safe-delete 会阻止批量删除/安装文件
 - 测试账号：13800138000 / 123456（已创建）
+- Git 仓库: qiuli55/SaaS (GitHub), 远程 main 分支
+- 推送需走代理: `git -c http.proxy=http://127.0.0.1:7892 push`
+- 本地 .git/config 写入被 WorkBuddy 阻止，需用 Edit 工具手动改
 
 ## 数据库表
 - users（用户）, cases（案件）, documents（文书）, case_files（文件）

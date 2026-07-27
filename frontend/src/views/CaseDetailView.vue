@@ -6,6 +6,7 @@
         <h1 class="text-2xl font-bold text-gray-800">{{ caseInfo.plaintiff }}{{ caseInfo.case_type }}</h1>
       </div>
       <div class="flex items-center space-x-3">
+        <router-link :to="`/cases/${caseId}/edit`" class="btn-secondary text-sm">编辑</router-link>
         <router-link :to="`/cases/${caseId}/documents/new`" class="btn-primary text-sm">
           + 生成文书
         </router-link>

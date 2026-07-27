@@ -367,6 +367,93 @@ def download_docx(
         raise HTTPException(status_code=500, detail=f"导出 Word 失败: {str(e)}")
 
 
+@router.get("/api/documents/{doc_id}/download/pdf")
+def download_pdf(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    doc = db.query(Document).filter(
+        Document.id == doc_id,
+        Document.user_id == current_user.id,
+    ).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文书不存在")
+
+    try:
+        from fpdf import FPDF
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=25)
+
+        # 尝试使用中文字体
+        chinese_font = None
+        font_paths = [
+            "C:/Windows/Fonts/simsun.ttc",
+            "C:/Windows/Fonts/simfang.ttf",
+            "C:/Windows/Fonts/msyh.ttc",
+        ]
+        for fp in font_paths:
+            if os.path.exists(fp):
+                pdf.add_font("CN", "", fp, uni=True)
+                pdf.add_font("CN", "B", fp, uni=True)
+                chinese_font = "CN"
+                break
+
+        if not chinese_font:
+            # 兜底：返回纯文本 PDF
+            pdf.set_font("Helvetica", "", 12)
+            lines = doc.final_content.split("\n")
+            for line in lines:
+                line = line.strip()
+                safe_line = line.encode("latin-1", errors="replace").decode("latin-1")
+                if not safe_line.strip():
+                    pdf.ln(5)
+                else:
+                    pdf.cell(0, 8, safe_line, ln=True)
+        else:
+            pdf.set_font(chinese_font, "", 14)
+            lines = doc.final_content.split("\n")
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if not line:
+                    pdf.ln(5)
+                    continue
+
+                # 标题
+                if i == 0 and (doc.doc_type in line or any(kw in line for kw in
+                    ["起诉状", "答辩状", "律师函", "代理词", "意见书", "上诉状", "申请书", "函"])):
+                    pdf.set_font(chinese_font, "B", 18)
+                    pdf.cell(0, 14, line, ln=True, align="C")
+                    pdf.set_font(chinese_font, "", 14)
+                # 此致 / 落款
+                elif "此致" in line and len(line) <= 5:
+                    pdf.cell(0, 10, line, ln=True, align="R")
+                elif "法院" in line:
+                    pdf.cell(0, 10, line, ln=True, align="L")
+                    pdf.ln(5)
+                elif "具状人" in line or "起诉人" in line or "申请人" in line or "答辩人" in line:
+                    pdf.cell(0, 14, line, ln=True, align="R")
+                elif len(line) < 20 and "年" in line and "月" in line and "日" in line:
+                    pdf.cell(0, 10, line, ln=True, align="R")
+                else:
+                    pdf.multi_cell(0, 8, line)
+
+        buf = io.BytesIO()
+        pdf.output(buf)
+        buf.seek(0)
+
+        filename = f"{doc.doc_type}.pdf"
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename.encode('utf-8').decode('latin-1')}"},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导出 PDF 失败: {str(e)}")
+
+
 @router.get("/api/documents/history")
 def document_history(
     keyword: Optional[str] = Query(None),

@@ -37,6 +37,7 @@ class CaseCreate(BaseModel):
     commission_date: Optional[date] = None
     description: Optional[str] = ""
     status: Optional[str] = "进行中"
+    client_id: Optional[int] = None
 
 
 class CaseUpdate(BaseModel):
@@ -47,6 +48,7 @@ class CaseUpdate(BaseModel):
     commission_date: Optional[date] = None
     description: Optional[str] = None
     status: Optional[str] = None
+    client_id: Optional[int] = None
 
 
 class CaseInfo(BaseModel):
@@ -64,6 +66,8 @@ class CaseInfo(BaseModel):
     updated_at: datetime
     document_count: Optional[int] = 0
     file_count: Optional[int] = 0
+    client_id: Optional[int] = None
+    client_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -121,6 +125,44 @@ class APIResponse(BaseModel):
     code: int = 0
     message: str = "success"
     data: Optional[dict | list] = None
+
+
+# ========== 客户 (V2) ==========
+class ClientCreate(BaseModel):
+    name: Optional[str] = ""
+    phone: Optional[str] = ""
+    wechat: Optional[str] = ""
+    id_card: Optional[str] = ""
+    company: Optional[str] = ""
+    tags: Optional[str] = ""
+    remark: Optional[str] = ""
+
+
+class ClientUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    wechat: Optional[str] = None
+    id_card: Optional[str] = None
+    company: Optional[str] = None
+    tags: Optional[str] = None
+    remark: Optional[str] = None
+
+
+class ClientInfo(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    phone: str
+    wechat: str
+    id_card: str
+    company: str
+    tags: str
+    remark: str
+    created_at: datetime
+    case_count: Optional[int] = 0
+
+    class Config:
+        from_attributes = True
 
 
 class TokenResponse(BaseModel):

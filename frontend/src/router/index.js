@@ -34,6 +34,11 @@ const routes = [
     component: () => import('../views/CaseDetailView.vue'),
   },
   {
+    path: '/cases/:id/edit',
+    name: 'CaseEdit',
+    component: () => import('../views/CaseEditView.vue'),
+  },
+  {
     path: '/cases/:id/documents/new',
     name: 'DocumentNew',
     component: () => import('../views/DocumentNewView.vue'),
@@ -47,6 +52,21 @@ const routes = [
     path: '/history',
     name: 'History',
     component: () => import('../views/HistoryView.vue'),
+  },
+  {
+    path: '/clients',
+    name: 'ClientList',
+    component: () => import('../views/ClientListView.vue'),
+  },
+  {
+    path: '/clients/new',
+    name: 'ClientNew',
+    component: () => import('../views/ClientNewView.vue'),
+  },
+  {
+    path: '/clients/:id',
+    name: 'ClientDetail',
+    component: () => import('../views/ClientDetailView.vue'),
   },
 ]
 

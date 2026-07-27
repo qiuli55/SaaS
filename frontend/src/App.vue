@@ -24,9 +24,16 @@
                 案件管理
               </router-link>
               <router-link
+                to="/clients"
+                class="px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                :class="$route.path.startsWith('/clients') ? 'text-primary-700 bg-primary-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+              >
+                客户管理
+              </router-link>
+              <router-link
                 to="/history"
                 class="px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                :class="$route.path === '/history' ? 'text-primary-700 bg-primary-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                :class="$route.path.startsWith('/history') ? 'text-primary-700 bg-primary-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
               >
                 历史记录
               </router-link>

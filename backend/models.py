@@ -36,11 +36,13 @@ class Case(Base):
     status = Column(String(20), default="进行中")
     commission_date = Column(Date, nullable=True)
     description = Column(Text, default="")
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
                         onupdate=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="cases")
+    client = relationship("Client", back_populates="cases")
     documents = relationship("Document", back_populates="case", cascade="all, delete-orphan")
     files = relationship("CaseFile", back_populates="case", cascade="all, delete-orphan")
 
@@ -78,3 +80,20 @@ class CaseFile(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     case = relationship("Case", back_populates="files")
+
+
+class Client(Base):
+    __tablename__ = "clients"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(50), default="")
+    phone = Column(String(20), default="")
+    wechat = Column(String(50), default="")
+    id_card = Column(String(18), default="")
+    company = Column(String(100), default="")
+    tags = Column(Text, default="")  # JSON array string
+    remark = Column(Text, default="")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    cases = relationship("Case", back_populates="client")
