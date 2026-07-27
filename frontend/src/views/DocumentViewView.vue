@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api from '../api'
+import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api, { downloadFile } from '../api'
 const route = useRoute(); const router = useRouter(); const docId = route.params.id
 const doc = ref({}); const loading = ref(true); const copied = ref(false); const versions = ref([]); const currentDocId = ref(Number(docId))
 onMounted(async () => { await loadDoc(docId); await loadVersions() })
@@ -46,7 +46,7 @@ async function loadDoc(id) { loading.value = true; currentDocId.value = Number(i
 async function loadVersions() { try { const r = await api.get(`/documents/${docId}/versions`); versions.value = r.data.data||[] } catch{} }
 function switchVersion(id) { if(id===currentDocId.value) return; router.replace(`/documents/${id}`); loadDoc(id) }
 function copyContent() { if(doc.value?.final_content){ navigator.clipboard.writeText(doc.value.final_content); copied.value = true; setTimeout(()=>copied.value=false,2000) } }
-function downloadWord() { window.open(`/api/documents/${currentDocId.value}/download/docx`,'_blank') }
-function downloadPdf() { window.open(`/api/documents/${currentDocId.value}/download/pdf`,'_blank') }
+function downloadWord() { downloadFile(`/api/documents/${currentDocId.value}/download/docx`, `${doc.value.doc_type}.docx`) }
+function downloadPdf() { downloadFile(`/api/documents/${currentDocId.value}/download/pdf`, `${doc.value.doc_type}.pdf`) }
 function formatDate(d) { return d?.slice(0,10)||'' }
 </script>

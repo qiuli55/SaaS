@@ -28,3 +28,13 @@ api.interceptors.response.use(
 )
 
 export default api
+
+/** 触发浏览器下载文件 */
+export function downloadFile(url, filename) {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename || ''
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}

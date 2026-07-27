@@ -103,7 +103,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../api'
+import api, { downloadFile } from '../api'
 
 const router = useRouter()
 const docTypes = ['民事起诉状', '民事答辩状', '律师函', '催收函', '代理词', '法律意见书', '上诉状', '再审申请书']
@@ -146,6 +146,6 @@ async function startBatch() {
 }
 
 function viewDoc(id) { router.push(`/documents/${id}`) }
-function downloadWord(id) { window.open(`/api/documents/${id}/download/docx`, '_blank') }
-function downloadPdf(id) { window.open(`/api/documents/${id}/download/pdf`, '_blank') }
+function downloadWord(id) { downloadFile(`/api/documents/${id}/download/docx`, `${form.doc_type}.docx`) }
+function downloadPdf(id) { downloadFile(`/api/documents/${id}/download/pdf`, `${form.doc_type}.pdf`) }
 </script>
