@@ -749,6 +749,15 @@ body {
   font-size: 12px;
 }
 
+.login-feature-dot {
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  border-radius: 50%;
+  background: var(--navy-300);
+  flex-shrink: 0;
+}
+
 .login-right {
   flex: 1;
   min-width: 380px;
