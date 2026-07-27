@@ -66,7 +66,7 @@
               <option>开庭</option><option>举证</option><option>立案</option><option>上诉截止</option><option>待办</option>
             </select>
           </div>
-          <div class="form-group"><label class="form-label">日期时间</label><input v-model="newEvent.event_date" type="datetime-local" class="form-input" /></div>
+          <div class="form-group"><label class="form-label">日期时间 <span style="color:var(--error)">*</span></label><input v-model="newEvent.event_date" type="datetime-local" class="form-input" required /></div>
           <div class="form-group"><label class="form-label">地点</label><input v-model="newEvent.location" type="text" placeholder="如：海淀区人民法院 第3法庭" class="form-input" /></div>
           <div class="form-group"><label class="form-label">备注</label><textarea v-model="newEvent.notes" rows="3" placeholder="日程备注" class="form-textarea"></textarea></div>
         </div>
@@ -147,11 +147,12 @@ function editEvent(ev) {
 function closeModal() { showAddModal.value=false; editingId.value=null; Object.assign(newEvent,{event_type:'待办',event_date:'',location:'',notes:''}) }
 
 async function saveEvent() {
+  if (!newEvent.event_date) { alert('请填写日期时间'); return }
   try {
     if(editingId.value){ await api.put(`/schedules/${editingId.value}`,newEvent) }
     else { await api.post('/schedules',newEvent) }
     closeModal(); await fetchEvents()
-  } catch(e) { alert('操作失败') }
+  } catch(e) { alert('操作失败：' + (e.response?.data?.detail || e.message)) }
 }
 
 async function toggleDone(ev) { try { await api.put(`/schedules/${ev.id}`,{is_done:!ev.is_done}); await fetchEvents() } catch{} }
