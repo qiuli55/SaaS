@@ -7,18 +7,32 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+        navy: {
+          900: '#0f2942',
+          800: '#1a3c5e',
+          700: '#234c73',
+          600: '#2d5a87',
+          500: '#3b6fa3',
+          400: '#5a8ab8',
+          300: '#8aafd0',
+          200: '#c5d9e8',
+          100: '#e3edf5',
+          50: '#f1f6fa',
         },
+        accent: {
+          DEFAULT: '#2563eb',
+          hover: '#1d4ed8',
+          light: '#dbeafe',
+          50: '#eff6ff',
+        },
+      },
+      fontFamily: {
+        serif: ["'Noto Serif SC'", "'Source Han Serif SC'", "'Songti SC'", 'serif'],
+        sans: ["'Noto Sans SC'", '-apple-system', 'BlinkMacSystemFont', "'Segoe UI'", 'system-ui', 'sans-serif'],
+        mono: ["'JetBrains Mono'", "'Fira Code'", "'Consolas'", 'monospace'],
+      },
+      borderRadius: {
+        '2xl': '16px',
       },
     },
   },

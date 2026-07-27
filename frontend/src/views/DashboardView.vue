@@ -1,108 +1,91 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">工作台</h1>
-      <div class="flex space-x-3">
-        <router-link to="/cases/new" class="btn-primary">+ 新建案件</router-link>
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card stat-card-navy">
+        <div class="stat-label">案件总数</div>
+        <div class="stat-value">{{ stats.totalCases }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">本月新增 {{ stats.newThisMonth || 0 }}</div>
+      </div>
+      <div class="stat-card stat-card-accent">
+        <div class="stat-label">进行中</div>
+        <div class="stat-value">{{ stats.activeCases }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">待处理案件</div>
+      </div>
+      <div class="stat-card stat-card-success">
+        <div class="stat-label">文书生成</div>
+        <div class="stat-value">{{ stats.documentsGenerated }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">累计生成份数</div>
+      </div>
+      <div class="stat-card stat-card-warning">
+        <div class="stat-label">待办事项</div>
+        <div class="stat-value">{{ stats.pendingTodos }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">V3上线</div>
       </div>
     </div>
 
     <!-- 快捷操作 -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <router-link
-        to="/cases/new"
-        class="card hover:shadow-md transition-shadow cursor-pointer flex items-center space-x-4"
-      >
-        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-2xl">
-          📋
+    <div class="quick-actions mb-8">
+      <router-link to="/cases/new" class="quick-action" style="text-decoration:none;color:inherit">
+        <div class="quick-action-icon" style="background:#e3edf5">
+          <svg viewBox="0 0 22 22" fill="none" stroke="#2d5a87" stroke-width="1.5"><circle cx="11" cy="11" r="9"/><path d="M11 7v8M7 11h8"/></svg>
         </div>
-        <div>
-          <div class="font-semibold text-gray-800">新建案件</div>
-          <div class="text-sm text-gray-500">创建新的法律案件</div>
+        <div class="flex-1">
+          <div class="quick-action-label">新建案件</div>
+          <div class="quick-action-desc">创建新的法律案件</div>
         </div>
       </router-link>
-      <router-link
-        to="/documents/batch"
-        class="card hover:shadow-md transition-shadow cursor-pointer flex items-center space-x-4"
-      >
-        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-2xl">
-          ⚡
+      <router-link to="/cases" class="quick-action" style="text-decoration:none;color:inherit">
+        <div class="quick-action-icon" style="background:#dbeafe">
+          <svg viewBox="0 0 22 22" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M18 20V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14"/><path d="M2 10h18"/></svg>
         </div>
-        <div>
-          <div class="font-semibold text-gray-800">批量生成</div>
-          <div class="text-sm text-gray-500">一次生成多份同类文书</div>
+        <div class="flex-1">
+          <div class="quick-action-label">案件管理</div>
+          <div class="quick-action-desc">查看和搜索所有案件</div>
         </div>
       </router-link>
-      <router-link
-        to="/cases"
-        class="card hover:shadow-md transition-shadow cursor-pointer flex items-center space-x-4"
-      >
-        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-2xl">
-          📝
+      <router-link to="/documents/batch" class="quick-action" style="text-decoration:none;color:inherit">
+        <div class="quick-action-icon" style="background:#ecfdf5">
+          <svg viewBox="0 0 22 22" fill="none" stroke="#059669" stroke-width="1.5"><path d="M3 15h5l4 4 4-4h5V4a1 1 0 00-1-1H4a1 1 0 00-1 1v11z"/></svg>
         </div>
-        <div>
-          <div class="font-semibold text-gray-800">管理案件</div>
-          <div class="text-sm text-gray-500">查看所有案件</div>
-        </div>
-      </router-link>
-      <router-link
-        to="/history"
-        class="card hover:shadow-md transition-shadow cursor-pointer flex items-center space-x-4"
-      >
-        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-2xl">
-          📚
-        </div>
-        <div>
-          <div class="font-semibold text-gray-800">历史记录</div>
-          <div class="text-sm text-gray-500">查看生成记录</div>
+        <div class="flex-1">
+          <div class="quick-action-label">批量生成</div>
+          <div class="quick-action-desc">一次生成多份同类文书</div>
         </div>
       </router-link>
     </div>
 
     <!-- 最近案件 -->
     <div class="card">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">📋 我的案件</h2>
-        <router-link to="/cases" class="text-sm text-primary-600 hover:text-primary-700">
-          查看全部 →
-        </router-link>
+      <div class="card-header">
+        <span class="card-title">最近案件</span>
+        <router-link to="/cases" class="btn btn-ghost btn-sm">查看全部</router-link>
       </div>
-
-      <div v-if="loading" class="text-center py-8 text-gray-400">加载中...</div>
-
-      <div v-else-if="cases.length === 0" class="text-center py-12">
-        <div class="text-4xl mb-3">📭</div>
-        <p class="text-gray-500 mb-4">还没有案件</p>
-        <router-link to="/cases/new" class="btn-primary">创建第一个案件</router-link>
-      </div>
-
-      <div v-else class="space-y-2">
-        <div
-          v-for="c in cases"
-          :key="c.id"
-          class="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-          @click="$router.push(`/cases/${c.id}`)"
-        >
-          <div class="flex items-center space-x-4 min-w-0">
-            <div>
-              <div class="font-medium text-gray-800 truncate">
-                {{ c.plaintiff }}{{ c.case_type }}
-              </div>
-              <div class="text-sm text-gray-400 mt-0.5">
-                {{ c.case_no }} · {{ formatDate(c.created_at) }}
-              </div>
-            </div>
-            <div class="flex items-center space-x-2 text-xs text-gray-400">
-              <span>{{ c.document_count }}份文书</span>
-              <span>·</span>
-              <span>{{ c.file_count }}个文件</span>
-            </div>
-          </div>
-          <div class="flex items-center space-x-3">
-            <span :class="statusClass(c.status)" class="shrink-0">{{ c.status }}</span>
-            <span class="text-gray-300">▸</span>
-          </div>
+      <div class="card-body" style="padding:0">
+        <div v-if="recentCases.length === 0" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
+          <div style="font-size:36px;margin-bottom:12px">📋</div>
+          <div style="font-size:14px">暂无案件，点击上方「新建案件」开始</div>
         </div>
+        <table v-else class="table">
+          <thead>
+            <tr>
+              <th>案件编号</th>
+              <th>案由</th>
+              <th>当事人</th>
+              <th>标的额</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in recentCases" :key="c.id" @click="$router.push(`/cases/${c.id}`)">
+              <td style="color:var(--navy-800);font-weight:500;font-family:'JetBrains Mono',monospace;font-size:13px">{{ c.case_no }}</td>
+              <td>{{ c.case_type }}</td>
+              <td style="color:var(--text-secondary);font-size:13px">{{ c.plaintiff }} vs {{ c.defendant }}</td>
+              <td style="font-family:'JetBrains Mono',monospace;font-weight:500">¥{{ formatMoney(c.subject_amount) }}</td>
+              <td><span :class="statusBadge(c.status)">{{ c.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -112,31 +95,31 @@
 import { ref, onMounted } from 'vue'
 import api from '../api'
 
-const cases = ref([])
-const loading = ref(true)
+const stats = ref({ totalCases: 0, activeCases: 0, documentsGenerated: 0, pendingTodos: 0, newThisMonth: 0 })
+const recentCases = ref([])
 
 onMounted(async () => {
   try {
-    const res = await api.get('/cases', { params: { page_size: 5 } })
-    cases.value = res.data.items
+    const res = await api.get('/cases', { params: { page: 1, page_size: 5 } })
+    recentCases.value = res.data.items
+    stats.value.totalCases = res.data.total
+
+    const active = await api.get('/cases', { params: { status: '进行中', page_size: 1 } })
+    stats.value.activeCases = active.data.total
+
+    const history = await api.get('/documents/history', { params: { page_size: 1 } })
+    stats.value.documentsGenerated = history.data.data.total || 0
   } catch (err) {
-    console.error('加载案件失败', err)
-  } finally {
-    loading.value = false
+    console.error('加载工作台数据失败', err)
   }
 })
 
-function statusClass(status) {
-  const map = {
-    '进行中': 'badge-blue',
-    '已结案': 'badge-green',
-    '待立案': 'badge-yellow',
-  }
-  return map[status] || 'badge-gray'
+function statusBadge(status) {
+  const map = { '进行中': 'badge badge-info', '已结案': 'badge badge-success', '待立案': 'badge badge-warning' }
+  return map[status] || 'badge badge-neutral'
 }
 
-function formatDate(d) {
-  if (!d) return ''
-  return d.slice(0, 10)
+function formatMoney(v) {
+  return Number(v || 0).toLocaleString('zh-CN')
 }
 </script>
