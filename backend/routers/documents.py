@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
 import io
+from pydantic import BaseModel
 
 from database import get_db
 from models import Document, Case, User
@@ -286,6 +287,140 @@ async def generate_document(
             "created_at": doc.created_at.isoformat(),
         },
     }
+
+
+class BatchEntry(BaseModel):
+    plaintiff_name: str = ""
+    defendant_name: str = ""
+    amount: Optional[float] = 0
+    custom_facts: Optional[str] = ""
+
+
+class BatchGenerate(BaseModel):
+    doc_type: str
+    claims: Optional[str] = ""
+    facts: Optional[str] = ""
+    court_name: Optional[str] = ""
+    entries: list[BatchEntry]
+
+
+@router.post("/api/documents/generate-batch")
+async def generate_documents_batch(
+    req: BatchGenerate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-deepseek-api-key-here":
+        raise HTTPException(status_code=500, detail="请先配置 DeepSeek API Key")
+
+    if req.doc_type not in DOC_TYPES:
+        raise HTTPException(status_code=400, detail=f"不支持的文书类型：{req.doc_type}")
+
+    if not req.entries:
+        raise HTTPException(status_code=400, detail="请至少添加一个生成条目")
+
+    sp = SYSTEM_PROMPT.replace("{doc_type}", req.doc_type)
+    results = []
+
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        for i, entry in enumerate(req.entries):
+            # 构建提示词
+            user_prompt = f"""请根据以下信息生成一份{req.doc_type}：
+
+原告/申请人：{entry.plaintiff_name}
+被告/被申请人：{entry.defendant_name}
+标的额：{entry.amount or '未填写'}元
+诉讼请求：{req.claims or '请根据案件事实合理推断'}
+案件事实：{entry.custom_facts or req.facts or '请根据案由和当事人信息合理撰写'}
+管辖法院：{req.court_name or '有管辖权的人民法院'}
+
+请严格遵守法律文书格式要求，写出完整的{req.doc_type}。"""
+
+            try:
+                resp = await client.post(
+                    f"{DEEPSEEK_BASE_URL}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "deepseek-chat",
+                        "messages": [
+                            {"role": "system", "content": sp},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 4096,
+                    },
+                )
+                resp.raise_for_status()
+                result = resp.json()
+                ai_text = result["choices"][0]["message"]["content"]
+
+                # 分离正文和法条
+                final_content = ai_text
+                articles_text = ai_text
+                if "===法条引用===" in ai_text:
+                    parts = ai_text.split("===法条引用===", 1)
+                    final_content = parts[0].strip()
+                    articles_text = parts[1].strip() if len(parts) > 1 else ""
+
+                verified_articles = verify_articles(articles_text)
+
+                # 创建临时案件存储批量生成的文书
+                case = Case(
+                    user_id=current_user.id,
+                    case_no=f"BATCH-{current_user.id:04d}-{i+1:04d}",
+                    case_type="批量生成",
+                    plaintiff=entry.plaintiff_name,
+                    defendant=entry.defendant_name,
+                    subject_amount=entry.amount or 0,
+                    description=entry.custom_facts or req.facts or "",
+                    status="进行中",
+                )
+                db.add(case)
+                db.flush()
+
+                doc = Document(
+                    case_id=case.id,
+                    user_id=current_user.id,
+                    doc_type=req.doc_type,
+                    version=1,
+                    form_data={
+                        "mode": "batch",
+                        "claims": req.claims,
+                        "facts": entry.custom_facts or req.facts,
+                    },
+                    ai_raw_text=ai_text,
+                    final_content=final_content,
+                    verified_articles=verified_articles,
+                    status="已完成",
+                )
+                db.add(doc)
+                db.flush()
+
+                results.append({
+                    "index": i + 1,
+                    "plaintiff": entry.plaintiff_name,
+                    "defendant": entry.defendant_name,
+                    "document_id": doc.id,
+                    "case_id": case.id,
+                    "final_content": final_content[:500],
+                    "verified_articles": verified_articles,
+                    "success": True,
+                })
+            except Exception as e:
+                results.append({
+                    "index": i + 1,
+                    "plaintiff": entry.plaintiff_name,
+                    "defendant": entry.defendant_name,
+                    "success": False,
+                    "error": str(e),
+                })
+
+        db.commit()
+
+    return {"code": 0, "data": {"total": len(req.entries), "results": results}}
 
 
 @router.get("/api/cases/{case_id}/documents")

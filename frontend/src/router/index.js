@@ -44,6 +44,11 @@ const routes = [
     component: () => import('../views/DocumentNewView.vue'),
   },
   {
+    path: '/documents/batch',
+    name: 'BatchGenerate',
+    component: () => import('../views/BatchGenerateView.vue'),
+  },
+  {
     path: '/documents/:id',
     name: 'DocumentView',
     component: () => import('../views/DocumentViewView.vue'),

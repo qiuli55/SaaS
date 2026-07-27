@@ -22,6 +22,18 @@
         </div>
       </router-link>
       <router-link
+        to="/documents/batch"
+        class="card hover:shadow-md transition-shadow cursor-pointer flex items-center space-x-4"
+      >
+        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-2xl">
+          ⚡
+        </div>
+        <div>
+          <div class="font-semibold text-gray-800">批量生成</div>
+          <div class="text-sm text-gray-500">一次生成多份同类文书</div>
+        </div>
+      </router-link>
+      <router-link
         to="/cases"
         class="card hover:shadow-md transition-shadow cursor-pointer flex items-center space-x-4"
       >
