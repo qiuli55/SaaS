@@ -1,103 +1,61 @@
 <template>
   <div>
-    <div class="flex items-center space-x-4 mb-6">
-      <button @click="$router.push('/clients')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&larr;</button>
-      <div class="flex-1">
-        <h1 class="text-2xl font-bold text-gray-800">{{ client.name || '未填写姓名' }}</h1>
-      </div>
-      <button @click="confirmDelete" class="btn-danger text-sm">删除</button>
+    <div class="page-header">
+      <div><h1 class="page-title">{{ client.name || '未填写' }}</h1></div>
+      <button @click="confirmDelete" class="btn btn-danger btn-sm">删除</button>
     </div>
 
-    <div v-if="loading" class="text-center py-12 text-gray-400">加载中...</div>
+    <div v-if="loading" style="text-align:center;padding:64px;color:var(--text-muted)">加载中...</div>
     <template v-else>
-      <!-- 客户信息 -->
       <div class="card mb-6">
-        <div class="flex flex-wrap gap-2 mb-3">
-          <span v-for="tag in parseTags(client.tags)" :key="tag" class="badge badge-blue">{{ tag }}</span>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-          <div v-if="client.phone"><span class="text-gray-400">手机号</span><p class="font-medium">{{ client.phone }}</p></div>
-          <div v-if="client.wechat"><span class="text-gray-400">微信</span><p class="font-medium">{{ client.wechat }}</p></div>
-          <div v-if="client.id_card"><span class="text-gray-400">身份证</span><p class="font-medium">{{ client.id_card }}</p></div>
-          <div v-if="client.company"><span class="text-gray-400">公司</span><p class="font-medium">{{ client.company }}</p></div>
-          <div><span class="text-gray-400">创建时间</span><p class="font-medium">{{ formatDate(client.created_at) }}</p></div>
-        </div>
-        <div v-if="client.remark" class="mt-3 pt-3 border-t border-gray-100">
-          <span class="text-sm text-gray-400">备注</span>
-          <p class="text-sm text-gray-600 mt-1">{{ client.remark }}</p>
-        </div>
-      </div>
-
-      <!-- 关联案件 -->
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">关联案件 ({{ client.cases?.length || 0 }})</h2>
-
-      <div v-if="!client.cases || client.cases.length === 0" class="card text-center py-8">
-        <p class="text-gray-500 mb-3">暂无关联案件</p>
-        <router-link to="/cases/new" class="btn-primary text-sm">新建案件</router-link>
-      </div>
-
-      <div v-else class="space-y-2">
-        <div v-for="c in client.cases" :key="c.id" class="card hover:shadow-md transition-shadow cursor-pointer" @click="$router.push(`/cases/${c.id}`)">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-semibold text-gray-800">{{ c.plaintiff }}{{ c.case_type }}</h3>
-              <div class="text-sm text-gray-500">{{ c.case_no }} · ¥{{ formatMoney(c.subject_amount) }}</div>
-            </div>
-            <span :class="statusClass(c.status)">{{ c.status }}</span>
+        <div class="card-body">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+            <span v-for="t in parseTags(client.tags)" :key="t" class="badge badge-info">{{ t }}</span>
+          </div>
+          <div class="stats-grid" style="margin-bottom:0">
+            <div v-if="client.phone"><div class="stat-label">手机号</div><div style="font-weight:500;font-family:'JetBrains Mono',monospace">{{ client.phone }}</div></div>
+            <div v-if="client.wechat"><div class="stat-label">微信</div><div style="font-weight:500">{{ client.wechat }}</div></div>
+            <div v-if="client.id_card"><div class="stat-label">身份证</div><div style="font-weight:500;font-family:'JetBrains Mono',monospace;font-size:13px">{{ client.id_card }}</div></div>
+            <div v-if="client.company"><div class="stat-label">公司</div><div style="font-weight:500">{{ client.company }}</div></div>
+          </div>
+          <div v-if="client.remark" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light)">
+            <div class="stat-label">备注</div><div style="font-size:14px;color:var(--text-secondary)">{{ client.remark }}</div>
           </div>
         </div>
+      </div>
+
+      <h2 style="font-family:'Noto Serif SC',serif;font-size:20px;font-weight:600;color:var(--navy-900);margin-bottom:16px">关联案件 ({{ client.cases?.length || 0 }})</h2>
+
+      <div v-if="!client.cases?.length" style="text-align:center;padding:48px;color:var(--text-muted)">
+        <div style="font-size:36px;margin-bottom:12px">📋</div>
+        <div style="margin-bottom:16px">暂无关联案件</div>
+        <router-link to="/cases/new" class="btn btn-accent btn-sm">新建案件</router-link>
+      </div>
+
+      <div v-else class="table-wrapper">
+        <table class="table">
+          <thead><tr><th>编号</th><th>案由</th><th>当事人</th><th>标的额</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr v-for="c in client.cases" :key="c.id" @click="$router.push(`/cases/${c.id}`)">
+              <td style="color:var(--navy-800);font-family:'JetBrains Mono',monospace;font-size:13px">{{ c.case_no }}</td>
+              <td style="font-weight:500">{{ c.case_type }}</td>
+              <td style="color:var(--text-secondary);font-size:13px">{{ c.plaintiff }} vs {{ c.defendant }}</td>
+              <td style="font-family:'JetBrains Mono',monospace">¥{{ formatMoney(c.subject_amount) }}</td>
+              <td><span :class="statusBadge(c.status)">{{ c.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import api from '../api'
-
-const route = useRoute()
-const router = useRouter()
-const clientId = route.params.id
-
-const client = ref({})
-const loading = ref(true)
-
-onMounted(async () => {
-  try {
-    const res = await api.get(`/clients/${clientId}`)
-    client.value = res.data.data
-  } catch (err) {
-    console.error('加载客户失败', err)
-  } finally {
-    loading.value = false
-  }
-})
-
-async function confirmDelete() {
-  if (!confirm('确定要删除此客户吗？')) return
-  try {
-    await api.delete(`/clients/${clientId}`)
-    router.push('/clients')
-  } catch (err) {
-    alert('删除失败')
-  }
-}
-
-function parseTags(tags) {
-  try { return JSON.parse(tags) } catch { return tags ? tags.split(',') : [] }
-}
-
-function statusClass(status) {
-  const map = { '进行中': 'badge-blue', '已结案': 'badge-green', '待立案': 'badge-yellow' }
-  return map[status] || 'badge-gray'
-}
-
-function formatDate(d) {
-  return d ? d.slice(0, 10) : ''
-}
-
-function formatMoney(v) {
-  return Number(v || 0).toLocaleString('zh-CN')
-}
+import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api from '../api'
+const route = useRoute(); const router = useRouter(); const client = ref({}); const loading = ref(true)
+onMounted(async () => { try { const r = await api.get(`/clients/${route.params.id}`); client.value = r.data.data } catch(e){} finally { loading.value = false } })
+async function confirmDelete() { if(!confirm('确定删除此客户？')) return; try { await api.delete(`/clients/${route.params.id}`); router.push('/clients') } catch{} }
+function parseTags(t) { try { return JSON.parse(t) } catch { return t ? t.split(',') : [] } }
+function statusBadge(s) { const m = {'进行中':'badge badge-info','已结案':'badge badge-success','待立案':'badge badge-warning'}; return m[s]||'badge badge-neutral' }
+function formatMoney(v) { return Number(v||0).toLocaleString('zh-CN') }
 </script>

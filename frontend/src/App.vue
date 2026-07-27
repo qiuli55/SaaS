@@ -34,6 +34,12 @@
           历史记录
         </router-link>
 
+        <div class="sidebar-section">日程</div>
+        <router-link to="/calendar" class="sidebar-link">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="14" height="13" rx="1"/><path d="M2 7h14"/><path d="M6 1v3"/><path d="M12 1v3"/></svg>
+          日历日程
+        </router-link>
+
         <div class="sidebar-section">管理</div>
         <router-link to="/clients" class="sidebar-link">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 16v-1a4 4 0 014-4h2a4 4 0 014 4v1"/><circle cx="13" cy="8" r="2"/><path d="M10 16v-1a3 3 0 013-3"/></svg>

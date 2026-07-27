@@ -18,7 +18,7 @@ if env_path.exists():
                     os.environ[key] = value
 
 from database import engine, Base
-from routers import user, cases, documents, files, clients
+from routers import user, cases, documents, files, clients, schedules
 
 
 @asynccontextmanager
@@ -50,6 +50,7 @@ app.include_router(cases.router)
 app.include_router(documents.router)
 app.include_router(files.router)
 app.include_router(clients.router)
+app.include_router(schedules.router)
 
 
 @app.get("/")

@@ -100,3 +100,17 @@ class Client(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     cases = relationship("Case", back_populates="client")
+
+
+class Schedule(Base):
+    __tablename__ = "schedules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    case_id = Column(Integer, ForeignKey("cases.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    event_type = Column(String(20), default="待办")  # 开庭/举证/立案/上诉截止/待办
+    event_date = Column(DateTime, nullable=False)
+    location = Column(String(200), default="")
+    notes = Column(Text, default="")
+    is_done = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
