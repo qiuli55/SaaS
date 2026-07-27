@@ -739,14 +739,14 @@ body {
   z-index: 1;
 }
 
-.login-features { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+.login-features { display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; }
 
 .login-feature {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: rgba(255,255,255,0.7);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .login-right {
