@@ -32,7 +32,7 @@ function searchDebounced() { clearTimeout(timer); timer = setTimeout(()=>{page.v
 async function fetchHistory() {
   loading.value = true
   try { const r = await api.get('/documents/history', { params: { keyword:keyword.value||undefined, page:page.value, page_size:pageSize } })
-    items.value = r.data.data.items||[]; total.value = r.data.data.total||0 } catch{} finally { loading.value = false }
+    items.value = r.data.data.items||[]; total.value = r.data.data.total||0 } catch(e) { console.error('加载历史记录失败', e) } finally { loading.value = false }
 }
 function formatDate(d) { return d?.slice(0,10)||'' }
 </script>

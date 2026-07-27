@@ -73,25 +73,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api from '../api'
+import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api, { authDownload } from '../api'
 const route = useRoute(); const router = useRouter(); const caseId = route.params.id
-const caseInfo = ref({}); const documents = ref([]); const files = ref([]); const loading = ref(true); const activeTab = ref('documents')
+const caseInfo = ref({}); const documents = ref([]); const files = ref([]); const loading = ref(true); const activeTab = ref('documents'); const error = ref('')
 const selectedFiles = ref([]); const uploading = ref(false)
 
 onMounted(async () => {
   try { const [a,b,c] = await Promise.all([api.get(`/cases/${caseId}`), api.get(`/cases/${caseId}/documents`), api.get(`/cases/${caseId}/files`)])
-    caseInfo.value = a.data; documents.value = b.data.data||[]; files.value = c.data.data||[] } catch{} finally { loading.value = false }
+    caseInfo.value = a.data; documents.value = b.data.data||[]; files.value = c.data.data||[] } catch(e) { error.value = e?.response?.data?.detail || '加载案件详情失败' } finally { loading.value = false }
 })
 
 function handleFileSelect(e) { selectedFiles.value = Array.from(e.target.files) }
 async function uploadFiles() {
   uploading.value = true; const fd = new FormData(); selectedFiles.value.forEach(f => fd.append('files',f))
   try { await api.post(`/cases/${caseId}/files`, fd, { headers:{'Content-Type':'multipart/form-data'} }); selectedFiles.value = []
-    const r = await api.get(`/cases/${caseId}/files`); files.value = r.data.data||[] } catch{} finally { uploading.value = false }
+    const r = await api.get(`/cases/${caseId}/files`); files.value = r.data.data||[] } catch(e) { alert('上传失败：' + (e?.response?.data?.detail || e.message)) } finally { uploading.value = false }
 }
-function previewFile(id) { window.open(`/api/files/${id}/preview`,'_blank') }
-function downloadFile(id,name) { const a=document.createElement('a'); a.href=`/api/files/${id}/download`; a.download=name; a.click() }
-async function deleteFile(id) { if(!confirm('确定删除？')) return; try { await api.delete(`/files/${id}`); files.value = files.value.filter(f => f.id!==id) } catch{} }
+function previewFile(id) {
+  const token = localStorage.getItem('token')
+  const url = `/api/files/${id}/preview?token=${encodeURIComponent(token || '')}`
+  window.open(url, '_blank')
+}
+function downloadFile(id, name) { authDownload(`/files/${id}/download`, name) }
+async function deleteFile(id) { if(!confirm('确定删除？')) return; try { await api.delete(`/files/${id}`); files.value = files.value.filter(f => f.id!==id) } catch(e) { alert('删除失败：' + (e?.response?.data?.detail || e.message)) } }
 function statusBadge(s) { const m={'进行中':'badge badge-info','已结案':'badge badge-success','待立案':'badge badge-warning'}; return m[s]||'badge badge-neutral' }
 function regenerate(doc) { router.push(`/cases/${caseId}/documents/new?doc_type=${encodeURIComponent(doc.doc_type)}`) }
 function fileIcon(n) { const e=n?.split('.').pop()?.toLowerCase(); const m={pdf:'📄',doc:'📄',docx:'📄',xls:'📊',xlsx:'📊',png:'🖼️',jpg:'🖼️',jpeg:'🖼️'}; return m[e]||'📎' }

@@ -40,7 +40,7 @@ const route = useRoute(); const router = useRouter(); const caseId = route.param
 const caseInfo = ref({}); const loading = ref(true); const submitting = ref(false); const error = ref(''); const success = ref('')
 const form = reactive({ case_type:'',plaintiff:'',defendant:'',subject_amount:0,commission_date:'',description:'',status:'' })
 onMounted(async () => {
-  try { const r = await api.get(`/cases/${caseId}`); caseInfo.value = r.data; Object.assign(form, { case_type:r.data.case_type,plaintiff:r.data.plaintiff,defendant:r.data.defendant,subject_amount:r.data.subject_amount,commission_date:r.data.commission_date?.slice(0,10)||'',description:r.data.description||'',status:r.data.status }) } catch{} finally { loading.value = false }
+  try { const r = await api.get(`/cases/${caseId}`); caseInfo.value = r.data; Object.assign(form, { case_type:r.data.case_type,plaintiff:r.data.plaintiff,defendant:r.data.defendant,subject_amount:r.data.subject_amount,commission_date:r.data.commission_date?.slice(0,10)||'',description:r.data.description||'',status:r.data.status }) } catch(e) { error.value = e?.response?.data?.detail || '加载案件失败' } finally { loading.value = false }
 })
 async function handleSubmit() {
   error.value='';success.value='';submitting.value=true

@@ -4,20 +4,26 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# 加载 .env 文件（必须在 import routers 之前, 因为 routers 在模块级别读环境变量）
-env_path = Path(__file__).parent / ".env"
-if env_path.exists():
-    with open(env_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, _, value = line.partition("=")
-                key = key.strip()
-                value = value.strip().strip('"').strip("'")
-                if key and key not in os.environ:
-                    os.environ[key] = value
+# 使用 python-dotenv 加载 .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent / ".env")
+except ImportError:
+    # 兜底：手动解析 .env（python-dotenv 未安装时）
+    env_path = Path(__file__).parent / ".env"
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    key = key.strip()
+                    value = value.strip().strip('"').strip("'")
+                    if key and key not in os.environ:
+                        os.environ[key] = value
 
-from database import engine, Base
+from database import engine, Base, SessionLocal
+from sqlalchemy import text
 from routers import user, cases, documents, files, clients, schedules
 
 
@@ -35,7 +41,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS
+# CORS — 生产环境应配置白名单
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -60,4 +66,13 @@ def root():
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok"}
+    # 检查数据库连接
+    db_ok = False
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db_ok = True
+        db.close()
+    except Exception:
+        pass
+    return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "disconnected"}

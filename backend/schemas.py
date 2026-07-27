@@ -178,6 +178,49 @@ class ClientInfo(BaseModel):
         from_attributes = True
 
 
+# ========== 日程 ==========
+class ScheduleCreate(BaseModel):
+    case_id: Optional[int] = None
+    event_type: Optional[str] = "待办"
+    event_date: datetime
+    location: Optional[str] = ""
+    notes: Optional[str] = ""
+
+
+class ScheduleUpdate(BaseModel):
+    case_id: Optional[int] = None
+    event_type: Optional[str] = None
+    event_date: Optional[datetime] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    is_done: Optional[bool] = None
+
+
+class ScheduleInfo(BaseModel):
+    id: int
+    case_id: Optional[int] = None
+    event_type: str
+    event_date: datetime
+    location: str
+    notes: str
+    is_done: bool
+    case_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ========== 用户更新 ==========
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    firm_name: Optional[str] = None
+
+
+class PasswordChange(BaseModel):
+    old_password: str = Field(..., min_length=6, max_length=32)
+    new_password: str = Field(..., min_length=6, max_length=32)
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

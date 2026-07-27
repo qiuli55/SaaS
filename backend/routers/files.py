@@ -119,15 +119,23 @@ def list_files(
     }
 
 
+def _get_user_file(file_id: int, user_id: int, db: Session):
+    """获取用户拥有的文件，统一校验所有权"""
+    cf = db.query(CaseFile).filter(
+        CaseFile.id == file_id, CaseFile.user_id == user_id
+    ).first()
+    if not cf:
+        raise HTTPException(status_code=404, detail="文件不存在")
+    return cf
+
+
 @router.get("/api/files/{file_id}/preview")
 def preview_file(
     file_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    cf = db.query(CaseFile).filter(CaseFile.id == file_id).first()
-    if not cf:
-        raise HTTPException(status_code=404, detail="文件不存在")
+    cf = _get_user_file(file_id, current_user.id, db)
 
     absolute_path = os.path.join(UPLOAD_DIR, cf.file_path)
     if not os.path.exists(absolute_path):
@@ -142,9 +150,7 @@ def download_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    cf = db.query(CaseFile).filter(CaseFile.id == file_id).first()
-    if not cf:
-        raise HTTPException(status_code=404, detail="文件不存在")
+    cf = _get_user_file(file_id, current_user.id, db)
 
     absolute_path = os.path.join(UPLOAD_DIR, cf.file_path)
     if not os.path.exists(absolute_path):
@@ -193,9 +199,7 @@ def delete_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    cf = db.query(CaseFile).filter(CaseFile.id == file_id).first()
-    if not cf:
-        raise HTTPException(status_code=404, detail="文件不存在")
+    cf = _get_user_file(file_id, current_user.id, db)
 
     # 删除物理文件
     absolute_path = os.path.join(UPLOAD_DIR, cf.file_path)

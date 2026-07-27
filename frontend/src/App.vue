@@ -102,6 +102,7 @@ const pageTitle = computed(() => {
     'ClientList': '客户通讯录',
     'ClientNew': '添加客户',
     'ClientDetail': '客户详情',
+    'Calendar': '日历日程',
   }
   return titles[route.name] || '法律AI助手'
 })

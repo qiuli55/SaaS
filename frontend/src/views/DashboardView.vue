@@ -20,7 +20,7 @@
       <div class="stat-card stat-card-warning">
         <div class="stat-label">待办事项</div>
         <div class="stat-value">{{ stats.pendingTodos }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">V3上线</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">未完成日程</div>
       </div>
     </div>
 

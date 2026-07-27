@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
+import uuid
 from database import get_db
 from models import Case, Document, CaseFile, User
 from schemas import CaseCreate, CaseUpdate, CaseInfo, CaseListResponse
@@ -74,11 +75,11 @@ def create_case(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Generate case_no
-    count_today = db.query(Case).filter(
-        Case.user_id == current_user.id
-    ).count() + 1
-    case_no = f"LA-{current_user.id:04d}-{count_today:04d}"
+    # 使用时间戳+随机串生成唯一 case_no，避免竞态条件
+    from datetime import datetime as dt
+    ts = dt.now().strftime("%Y%m%d%H%M%S")
+    short_uid = uuid.uuid4().hex[:4]
+    case_no = f"LA-{ts}-{short_uid}"
 
     case = Case(
         user_id=current_user.id,

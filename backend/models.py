@@ -64,6 +64,8 @@ class Document(Base):
     verified_articles = Column(JSON, default=list)
     status = Column(String(20), default="草稿")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="documents")
     case = relationship("Case", back_populates="documents")
@@ -81,6 +83,8 @@ class CaseFile(Base):
     file_path = Column(String(500), default="")
     mime_type = Column(String(50), default="")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
 
     case = relationship("Case", back_populates="files")
 
@@ -98,6 +102,8 @@ class Client(Base):
     tags = Column(Text, default="")  # JSON array string
     remark = Column(Text, default="")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
 
     cases = relationship("Case", back_populates="client")
 
@@ -106,7 +112,7 @@ class Schedule(Base):
     __tablename__ = "schedules"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    case_id = Column(Integer, ForeignKey("cases.id"), nullable=False, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     event_type = Column(String(20), default="待办")  # 开庭/举证/立案/上诉截止/待办
     event_date = Column(DateTime, nullable=False)
@@ -114,3 +120,8 @@ class Schedule(Base):
     notes = Column(Text, default="")
     is_done = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User")
+    case = relationship("Case")

@@ -78,6 +78,10 @@ const routes = [
     name: 'Calendar',
     component: () => import('../views/CalendarView.vue'),
   },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
+  },
 ]
 
 const router = createRouter({

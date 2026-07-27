@@ -34,6 +34,12 @@
         <div style="font-size:13px;color:var(--text-muted);flex-shrink:0">{{ c.case_count }}案件</div>
       </div>
     </div>
+
+    <div v-if="total > pageSize" style="display:flex;justify-content:center;margin-top:20px;gap:8px">
+      <button @click="page--; fetchClients()" :disabled="page<=1" class="btn btn-outline btn-sm">上一页</button>
+      <span style="padding:6px 16px;font-size:13px;color:var(--text-muted)">{{ page }} / {{ Math.ceil(total/pageSize) }}</span>
+      <button @click="page++; fetchClients()" :disabled="page*pageSize>=total" class="btn btn-outline btn-sm">下一页</button>
+    </div>
   </div>
 </template>
 
@@ -41,14 +47,15 @@
 import { ref, onMounted } from 'vue'
 import api from '../api'
 
-const clients = ref([]); const loading = ref(true); const keyword = ref(''); let timer = null
+const clients = ref([]); const loading = ref(true); const keyword = ref(''); const page = ref(1); const pageSize = 20; const total = ref(0); let timer = null
 
 onMounted(() => fetchClients())
-function searchDebounced() { clearTimeout(timer); timer = setTimeout(() => fetchClients(), 400) }
+function searchDebounced() { clearTimeout(timer); timer = setTimeout(() => { page.value = 1; fetchClients() }, 400) }
 async function fetchClients() {
   loading.value = true
-  try { const res = await api.get('/clients', { params: { keyword: keyword.value||undefined } }); clients.value = res.data.data.items }
-  catch (e) { console.error(e) } finally { loading.value = false }
+  try { const res = await api.get('/clients', { params: { keyword: keyword.value||undefined, page: page.value, page_size: pageSize } })
+    clients.value = res.data.data.items; total.value = res.data.data.total || 0 }
+  catch (e) { console.error('加载客户列表失败', e) } finally { loading.value = false }
 }
 function parseTags(t) { try { return JSON.parse(t) } catch { return t ? t.split(',') : [] } }
 </script>

@@ -82,10 +82,10 @@ onMounted(async () => {
   if (route.query.doc_type) form.doc_type = route.query.doc_type
 
   try { const r = await api.get(`/cases/${caseId}`); caseInfo.value = r.data
-    if(r.data.plaintiff_detail) try { Object.assign(pInfo, JSON.parse(r.data.plaintiff_detail)) } catch{}
-    if(r.data.defendant_detail) try { Object.assign(dInfo, JSON.parse(r.data.defendant_detail)) } catch{}
+    if(r.data.plaintiff_detail) try { Object.assign(pInfo, JSON.parse(r.data.plaintiff_detail)) } catch(e) { console.error('解析原告详情失败', e) }
+    if(r.data.defendant_detail) try { Object.assign(dInfo, JSON.parse(r.data.defendant_detail)) } catch(e) { console.error('解析被告详情失败', e) }
     if(r.data.court_name) form.court_name = r.data.court_name
-  } catch{}
+  } catch(e) { generateError.value = e?.response?.data?.detail || '加载案件信息失败' }
 })
 
 async function generateDocument() {

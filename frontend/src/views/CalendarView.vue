@@ -95,7 +95,7 @@ onMounted(() => fetchEvents())
 
 async function fetchEvents() {
   const m = `${currentYear.value}-${String(currentMonth.value).padStart(2,'0')}`
-  try { const r = await api.get('/schedules',{params:{month:m}}); events.value = r.data.data } catch{}
+  try { const r = await api.get('/schedules',{params:{month:m}}); events.value = r.data.data } catch(e) { console.error('获取日程失败', e) }
 }
 
 const calendarDays = computed(() => {
@@ -155,8 +155,8 @@ async function saveEvent() {
   } catch(e) { alert('操作失败：' + (e.response?.data?.detail || e.message)) }
 }
 
-async function toggleDone(ev) { try { await api.put(`/schedules/${ev.id}`,{is_done:!ev.is_done}); await fetchEvents() } catch{} }
-async function deleteEvent(id) { if(!confirm('确定删除此日程？')) return; try { await api.delete(`/schedules/${id}`); await fetchEvents() } catch{} }
+async function toggleDone(ev) { try { await api.put(`/schedules/${ev.id}`,{is_done:!ev.is_done}); await fetchEvents() } catch(e) { alert('操作失败：' + (e?.response?.data?.detail || e.message)) } }
+async function deleteEvent(id) { if(!confirm('确定删除此日程？')) return; try { await api.delete(`/schedules/${id}`); await fetchEvents() } catch(e) { alert('删除失败：' + (e?.response?.data?.detail || e.message)) } }
 
 function eventClass(t) { const m={开庭:'error',举证:'warning',立案:'info','上诉截止':'error',待办:'neutral'}; return m[t]||'neutral' }
 function eventBadge(t) { const m={开庭:'badge badge-error',举证:'badge badge-warning',立案:'badge badge-info','上诉截止':'badge badge-error',待办:'badge badge-neutral'}; return m[t]||'badge badge-neutral' }

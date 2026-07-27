@@ -52,9 +52,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api from '../api'
-const route = useRoute(); const router = useRouter(); const client = ref({}); const loading = ref(true)
-onMounted(async () => { try { const r = await api.get(`/clients/${route.params.id}`); client.value = r.data.data } catch(e){} finally { loading.value = false } })
-async function confirmDelete() { if(!confirm('确定删除此客户？')) return; try { await api.delete(`/clients/${route.params.id}`); router.push('/clients') } catch{} }
+const route = useRoute(); const router = useRouter(); const client = ref({}); const loading = ref(true); const error = ref('')
+onMounted(async () => { try { const r = await api.get(`/clients/${route.params.id}`); client.value = r.data.data } catch(e) { error.value = e?.response?.data?.detail || '加载客户信息失败' } finally { loading.value = false } })
+async function confirmDelete() { if(!confirm('确定删除此客户？')) return; try { await api.delete(`/clients/${route.params.id}`); router.push('/clients') } catch(e) { alert('删除失败：' + (e?.response?.data?.detail || e.message)) } }
 function parseTags(t) { try { return JSON.parse(t) } catch { return t ? t.split(',') : [] } }
 function statusBadge(s) { const m = {'进行中':'badge badge-info','已结案':'badge badge-success','待立案':'badge badge-warning'}; return m[s]||'badge badge-neutral' }
 function formatMoney(v) { return Number(v||0).toLocaleString('zh-CN') }

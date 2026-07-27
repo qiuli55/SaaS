@@ -42,8 +42,8 @@ import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-r
 const route = useRoute(); const router = useRouter(); const docId = route.params.id
 const doc = ref({}); const loading = ref(true); const copied = ref(false); const versions = ref([]); const currentDocId = ref(Number(docId))
 onMounted(async () => { await loadDoc(docId); await loadVersions() })
-async function loadDoc(id) { loading.value = true; currentDocId.value = Number(id); try { const r = await api.get(`/documents/${id}`); doc.value = r.data.data } catch{} finally { loading.value = false } }
-async function loadVersions() { try { const r = await api.get(`/documents/${docId}/versions`); versions.value = r.data.data||[] } catch{} }
+async function loadDoc(id) { loading.value = true; currentDocId.value = Number(id); try { const r = await api.get(`/documents/${id}`); doc.value = r.data.data } catch(e) { console.error('加载文书失败', e) } finally { loading.value = false } }
+async function loadVersions() { try { const r = await api.get(`/documents/${docId}/versions`); versions.value = r.data.data||[] } catch(e) { console.error('加载版本失败', e) } }
 function switchVersion(id) { if(id===currentDocId.value) return; router.replace(`/documents/${id}`); loadDoc(id) }
 function copyContent() { if(doc.value?.final_content){ navigator.clipboard.writeText(doc.value.final_content); copied.value = true; setTimeout(()=>copied.value=false,2000) } }
 function downloadWord() { authDownload(`/documents/${currentDocId.value}/download/docx`, `${doc.value.doc_type}.docx`) }

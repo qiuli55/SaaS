@@ -156,12 +156,12 @@ async def generate_document(
     try:
         if req.plaintiff_info:
             p_info = _json.loads(req.plaintiff_info)
-    except:
+    except _json.JSONDecodeError:
         pass
     try:
         if req.defendant_info:
             d_info = _json.loads(req.defendant_info)
-    except:
+    except _json.JSONDecodeError:
         pass
     # 兜底从案件数据中获取
     try:
@@ -501,6 +501,34 @@ def list_documents(
     return {"code": 0, "data": [item.model_dump() for item in items]}
 
 
+@router.get("/api/documents/history")
+def document_history(
+    keyword: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = db.query(Document).filter(Document.user_id == current_user.id)
+    if keyword:
+        query = query.filter(
+            (Document.doc_type.contains(keyword)) |
+            (Document.final_content.contains(keyword))
+        )
+    total = query.count()
+    docs = query.order_by(Document.created_at.desc()).offset((page-1)*page_size).limit(page_size).all()
+    items = []
+    for d in docs:
+        case = db.query(Case).filter(Case.id == d.case_id).first()
+        items.append(DocumentInfo(
+            id=d.id, case_id=d.case_id, doc_type=d.doc_type, version=d.version,
+            form_data=d.form_data, final_content=d.final_content[:200] if d.final_content else "",
+            verified_articles=d.verified_articles, status=d.status, created_at=d.created_at,
+            case_name=f"{case.plaintiff}{case.case_type}" if case else "",
+            plaintiff=case.plaintiff if case else "", defendant=case.defendant if case else ""))
+    return {"code":0,"data":{"total":total,"items":[i.model_dump() for i in items],"page":page,"page_size":page_size}}
+
+
 @router.get("/api/documents/{doc_id}")
 def get_document(
     doc_id: int,
@@ -633,62 +661,55 @@ def download_pdf(
     try:
         from fpdf import FPDF
 
-        pdf = FPDF()
+        pdf = FPDF(orientation='P', format='A4')
         pdf.add_page()
-        pdf.set_auto_page_break(auto=True, margin=25)
+        pdf.set_auto_page_break(auto=True, margin=20)
 
         # 尝试使用中文字体
         chinese_font = None
         font_paths = [
-            "C:/Windows/Fonts/simsun.ttc",
             "C:/Windows/Fonts/simfang.ttf",
-            "C:/Windows/Fonts/msyh.ttc",
+            "C:/Windows/Fonts/simsunb.ttf",
         ]
         for fp in font_paths:
             if os.path.exists(fp):
-                pdf.add_font("CN", "", fp, uni=True)
-                pdf.add_font("CN", "B", fp, uni=True)
-                chinese_font = "CN"
-                break
+                try:
+                    pdf.add_font("CN", "", fp)
+                    chinese_font = "CN"
+                    break
+                except Exception:
+                    continue
 
         if not chinese_font:
             # 兜底：返回纯文本 PDF
             pdf.set_font("Helvetica", "", 12)
-            lines = doc.final_content.split("\n")
-            for line in lines:
-                line = line.strip()
-                safe_line = line.encode("latin-1", errors="replace").decode("latin-1")
-                if not safe_line.strip():
-                    pdf.ln(5)
+            for line in doc.final_content.split("\n"):
+                safe = line.strip().encode("latin-1", errors="replace").decode("latin-1")
+                if safe:
+                    pdf.cell(0, 8, safe, new_x="LMARGIN", new_y="NEXT")
                 else:
-                    pdf.cell(0, 8, safe_line, ln=True)
+                    pdf.ln(5)
         else:
-            pdf.set_font(chinese_font, "", 14)
-            lines = doc.final_content.split("\n")
-            for i, line in enumerate(lines):
+            pdf.set_font(chinese_font, "", 12)
+            for i, line in enumerate(doc.final_content.split("\n")):
                 line = line.strip()
                 if not line:
-                    pdf.ln(5)
+                    pdf.ln(4)
                     continue
-
                 # 标题
-                if i == 0 and (doc.doc_type in line or any(kw in line for kw in
-                    ["起诉状", "答辩状", "律师函", "代理词", "意见书", "上诉状", "申请书", "函"])):
-                    pdf.set_font(chinese_font, "B", 18)
-                    pdf.cell(0, 14, line, ln=True, align="C")
-                    pdf.set_font(chinese_font, "", 14)
-                # 此致 / 落款
+                if i == 0:
+                    pdf.cell(0, 14, line, new_x="LMARGIN", new_y="NEXT", align="C")
                 elif "此致" in line and len(line) <= 5:
-                    pdf.cell(0, 10, line, ln=True, align="R")
-                elif "法院" in line:
-                    pdf.cell(0, 10, line, ln=True, align="L")
-                    pdf.ln(5)
+                    pdf.cell(0, 10, line, new_x="LMARGIN", new_y="NEXT", align="R")
                 elif "具状人" in line or "起诉人" in line or "申请人" in line or "答辩人" in line:
-                    pdf.cell(0, 14, line, ln=True, align="R")
+                    pdf.cell(0, 14, line, new_x="LMARGIN", new_y="NEXT", align="R")
                 elif len(line) < 20 and "年" in line and "月" in line and "日" in line:
-                    pdf.cell(0, 10, line, ln=True, align="R")
+                    pdf.cell(0, 10, line, new_x="LMARGIN", new_y="NEXT", align="R")
+                elif "法院" in line:
+                    pdf.cell(0, 10, line, new_x="LMARGIN", new_y="NEXT", align="L")
+                    pdf.ln(5)
                 else:
-                    pdf.multi_cell(0, 8, line)
+                    pdf.cell(0, 7, line, new_x="LMARGIN", new_y="NEXT")
 
         buf = io.BytesIO()
         pdf.output(buf)
@@ -704,47 +725,43 @@ def download_pdf(
         raise HTTPException(status_code=500, detail=f"导出 PDF 失败: {str(e)}")
 
 
-@router.get("/api/documents/history")
-def document_history(
-    keyword: Optional[str] = Query(None),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+@router.put("/api/documents/{doc_id}")
+def update_document(
+    doc_id: int,
+    req: dict,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    query = db.query(Document).filter(Document.user_id == current_user.id)
-    if keyword:
-        query = query.filter(
-            (Document.doc_type.contains(keyword)) |
-            (Document.final_content.contains(keyword))
-        )
+    """编辑文书内容（仅 final_content 和 status）"""
+    doc = db.query(Document).filter(
+        Document.id == doc_id,
+        Document.user_id == current_user.id,
+    ).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文书不存在")
 
-    total = query.count()
-    docs = query.order_by(Document.created_at.desc()).offset(
-        (page - 1) * page_size
-    ).limit(page_size).all()
+    if "final_content" in req:
+        doc.final_content = req["final_content"]
+    if "status" in req:
+        doc.status = req["status"]
 
-    items = []
-    for d in docs:
-        case = db.query(Case).filter(Case.id == d.case_id).first()
-        items.append(DocumentInfo(
-            id=d.id,
-            case_id=d.case_id,
-            doc_type=d.doc_type,
-            version=d.version,
-            form_data=d.form_data,
-            final_content=d.final_content[:200] if d.final_content else "",
-            verified_articles=d.verified_articles,
-            status=d.status,
-            created_at=d.created_at,
-            case_name=f"{case.plaintiff}{case.case_type}" if case else "",
-            plaintiff=case.plaintiff if case else "",
-            defendant=case.defendant if case else "",
-        ))
+    db.commit()
+    db.refresh(doc)
+    return {"code": 0, "message": "更新成功", "data": {"id": doc.id}}
 
-    return {"code": 0, "data": {
-        "total": total,
-        "items": [item.model_dump() for item in items],
-        "page": page,
-        "page_size": page_size,
-    }}
+
+@router.delete("/api/documents/{doc_id}")
+def delete_document(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    doc = db.query(Document).filter(
+        Document.id == doc_id,
+        Document.user_id == current_user.id,
+    ).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文书不存在")
+    db.delete(doc)
+    db.commit()
+    return {"code": 0, "message": "已删除"}
