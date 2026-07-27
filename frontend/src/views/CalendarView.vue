@@ -17,7 +17,7 @@
     <div class="calendar-grid">
       <div class="calendar-header" v-for="d in ['一','二','三','四','五','六','日']" :key="d">{{ d }}</div>
       <div v-for="(day, i) in calendarDays" :key="i"
-        class="calendar-cell" :class="{ 'other-month': !day.isCurrentMonth, 'today': day.isToday }"
+        class="calendar-cell" :class="{ 'other-month': !day.isCurrentMonth, 'today': day.isToday, 'selected': day.date === selectedDate }"
         @click="day.isCurrentMonth && selectDate(day.date)">
         <span class="calendar-day">{{ day.day }}</span>
         <div v-for="ev in day.events.slice(0, 3)" :key="ev.id"
