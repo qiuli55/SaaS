@@ -749,6 +749,14 @@ body {
   font-size: 12px;
 }
 
+.login-feature svg {
+  display: inline !important;
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
 .login-feature-dot {
   width: 6px;
   height: 6px;
