@@ -36,5 +36,11 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addBase }) {
+      addBase({
+        'svg': { display: 'inline-block', verticalAlign: 'middle', maxWidth: 'none' },
+      })
+    }
+  ],
 }
