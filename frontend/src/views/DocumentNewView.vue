@@ -78,6 +78,9 @@ const pInfo = reactive({ gender:'',birth:'',ethnicity:'',id_card:'',phone:'',add
 const dInfo = reactive({ legal_rep:'',phone:'',address:'' })
 
 onMounted(async () => {
+  // 从URL参数预选文书类型（重新生成场景）
+  if (route.query.doc_type) form.doc_type = route.query.doc_type
+
   try { const r = await api.get(`/cases/${caseId}`); caseInfo.value = r.data
     if(r.data.plaintiff_detail) try { Object.assign(pInfo, JSON.parse(r.data.plaintiff_detail)) } catch{}
     if(r.data.defendant_detail) try { Object.assign(dInfo, JSON.parse(r.data.defendant_detail)) } catch{}

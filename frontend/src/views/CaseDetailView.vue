@@ -36,12 +36,13 @@
           <router-link :to="`/cases/${caseId}/documents/new`" class="btn btn-accent btn-sm">生成第一份文书</router-link>
         </div>
         <div class="table-wrapper" v-else>
-          <table class="table"><thead><tr><th>文书类型</th><th>版本</th><th>生成时间</th><th>状态</th></tr></thead>
+          <table class="table"><thead><tr><th>文书类型</th><th>版本</th><th>生成时间</th><th>状态</th><th style="width:100px">操作</th></tr></thead>
             <tbody><tr v-for="d in documents" :key="d.id" @click="$router.push(`/documents/${d.id}`)">
               <td style="font-weight:500;color:var(--navy-800)">{{ d.doc_type }}</td>
               <td style="font-family:'JetBrains Mono',monospace;font-size:13px">V{{ d.version }}</td>
               <td style="color:var(--text-secondary);font-size:13px">{{ formatDate(d.created_at) }}</td>
               <td><span :class="d.status==='已完成'?'badge badge-success':'badge badge-neutral'">{{ d.status }}</span></td>
+              <td><button @click.stop="regenerate(d)" class="btn btn-ghost btn-sm" style="color:var(--accent)">重新生成</button></td>
             </tr></tbody>
           </table>
         </div>
@@ -72,8 +73,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; import { useRoute } from 'vue-router'; import api from '../api'
-const route = useRoute(); const caseId = route.params.id
+import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api from '../api'
+const route = useRoute(); const router = useRouter(); const caseId = route.params.id
 const caseInfo = ref({}); const documents = ref([]); const files = ref([]); const loading = ref(true); const activeTab = ref('documents')
 const selectedFiles = ref([]); const uploading = ref(false)
 
@@ -92,6 +93,7 @@ function previewFile(id) { window.open(`/api/files/${id}/preview`,'_blank') }
 function downloadFile(id,name) { const a=document.createElement('a'); a.href=`/api/files/${id}/download`; a.download=name; a.click() }
 async function deleteFile(id) { if(!confirm('确定删除？')) return; try { await api.delete(`/files/${id}`); files.value = files.value.filter(f => f.id!==id) } catch{} }
 function statusBadge(s) { const m={'进行中':'badge badge-info','已结案':'badge badge-success','待立案':'badge badge-warning'}; return m[s]||'badge badge-neutral' }
+function regenerate(doc) { router.push(`/cases/${caseId}/documents/new?doc_type=${encodeURIComponent(doc.doc_type)}`) }
 function fileIcon(n) { const e=n?.split('.').pop()?.toLowerCase(); const m={pdf:'📄',doc:'📄',docx:'📄',xls:'📊',xlsx:'📊',png:'🖼️',jpg:'🖼️',jpeg:'🖼️'}; return m[e]||'📎' }
 function fileTypeLabel(t) { const m={evidence:'证据',judgment:'判决书',entrustment:'委托书',other:'其他'}; return m[t]||'其他' }
 function formatDate(d) { return d?.slice(0,10)||'' }
