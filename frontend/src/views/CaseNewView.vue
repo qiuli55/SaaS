@@ -44,6 +44,38 @@
           </div>
         </div>
 
+        <!-- 原告详细信息 -->
+        <div class="p-3 bg-orange-50 rounded-lg border border-orange-100">
+          <details>
+            <summary class="text-sm text-orange-700 cursor-pointer font-medium">原告详细信息（选填，生成文书时会自动填入）</summary>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+              <div><label class="text-xs text-gray-500">性别</label><select v-model="pInfo.gender" class="input-field text-sm"><option value="">请选择</option><option>男</option><option>女</option></select></div>
+              <div><label class="text-xs text-gray-500">出生日期</label><input v-model="pInfo.birth" type="text" placeholder="如 1985年3月15日" class="input-field text-sm" /></div>
+              <div><label class="text-xs text-gray-500">民族</label><input v-model="pInfo.ethnicity" type="text" placeholder="如 汉族" class="input-field text-sm" /></div>
+              <div class="sm:col-span-2"><label class="text-xs text-gray-500">身份证号</label><input v-model="pInfo.id_card" type="text" placeholder="身份证号码" class="input-field text-sm" /></div>
+              <div><label class="text-xs text-gray-500">电话</label><input v-model="pInfo.phone" type="text" placeholder="手机号" class="input-field text-sm" /></div>
+              <div class="sm:col-span-3"><label class="text-xs text-gray-500">住址</label><input v-model="pInfo.address" type="text" placeholder="详细住址" class="input-field text-sm" /></div>
+            </div>
+          </details>
+        </div>
+
+        <!-- 被告详细信息 -->
+        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <details>
+            <summary class="text-sm text-gray-600 cursor-pointer font-medium">被告详细信息（选填）</summary>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+              <div><label class="text-xs text-gray-500">法定代表人</label><input v-model="dInfo.legal_rep" type="text" placeholder="法人代表" class="input-field text-sm" /></div>
+              <div><label class="text-xs text-gray-500">电话</label><input v-model="dInfo.phone" type="text" placeholder="联系电话" class="input-field text-sm" /></div>
+              <div class="sm:col-span-2"><label class="text-xs text-gray-500">住所地</label><input v-model="dInfo.address" type="text" placeholder="被告地址" class="input-field text-sm" /></div>
+            </div>
+          </details>
+        </div>
+
+        <div>
+          <label class="form-label">管辖法院</label>
+          <input v-model="form.court_name" type="text" placeholder="如 XX市XX区人民法院" class="input-field" />
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label class="form-label">标的额（元）</label>
@@ -97,7 +129,11 @@ const form = reactive({
   commission_date: '',
   description: '',
   status: '进行中',
+  court_name: '',
 })
+
+const pInfo = reactive({ gender: '', birth: '', ethnicity: '', id_card: '', phone: '', address: '' })
+const dInfo = reactive({ legal_rep: '', phone: '', address: '' })
 
 async function handleSubmit() {
   error.value = ''
@@ -108,7 +144,7 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    const payload = { ...form }
+    const payload = { ...form, plaintiff_detail: JSON.stringify(pInfo), defendant_detail: JSON.stringify(dInfo) }
     if (!payload.commission_date) delete payload.commission_date
     const res = await api.post('/cases', payload)
     router.push(`/cases/${res.data.id}`)
