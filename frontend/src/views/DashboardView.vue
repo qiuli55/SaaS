@@ -53,6 +53,33 @@
           <div class="quick-action-desc">一次生成多份同类文书</div>
         </div>
       </router-link>
+      <router-link to="/calendar" class="quick-action" style="text-decoration:none;color:inherit">
+        <div class="quick-action-icon" style="background:#fef3c7">
+          <svg viewBox="0 0 22 22" fill="none" stroke="#d97706" stroke-width="1.5"><rect x="3" y="4" width="16" height="16" rx="1"/><path d="M3 9h16"/><path d="M8 2v4"/><path d="M14 2v4"/></svg>
+        </div>
+        <div class="flex-1">
+          <div class="quick-action-label">日历日程</div>
+          <div class="quick-action-desc">开庭、举证、立案时间管理</div>
+        </div>
+      </router-link>
+      <router-link to="/clients" class="quick-action" style="text-decoration:none;color:inherit">
+        <div class="quick-action-icon" style="background:#fce4ec">
+          <svg viewBox="0 0 22 22" fill="none" stroke="#e91e63" stroke-width="1.5"><circle cx="8" cy="7" r="4"/><path d="M2 20v-1a5 5 0 015-5h2a5 5 0 015 5v1"/><circle cx="16" cy="9" r="3"/><path d="M13 20v-1a4 4 0 014-4"/></svg>
+        </div>
+        <div class="flex-1">
+          <div class="quick-action-label">客户管理</div>
+          <div class="quick-action-desc">客户通讯录与案件关联</div>
+        </div>
+      </router-link>
+      <router-link to="/history" class="quick-action" style="text-decoration:none;color:inherit">
+        <div class="quick-action-icon" style="background:#ede7f6">
+          <svg viewBox="0 0 22 22" fill="none" stroke="#7c4dff" stroke-width="1.5"><circle cx="11" cy="11" r="9"/><path d="M11 6v5l3 3"/></svg>
+        </div>
+        <div class="flex-1">
+          <div class="quick-action-label">历史记录</div>
+          <div class="quick-action-desc">查看所有生成过的文书</div>
+        </div>
+      </router-link>
     </div>
 
     <!-- 最近案件 -->
