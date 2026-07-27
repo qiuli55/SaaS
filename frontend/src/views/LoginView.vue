@@ -6,20 +6,24 @@
         <div class="login-brand-icon">法</div>
         <span class="login-brand-text">法律AI助手</span>
       </div>
-      <h1 class="login-hero-title">让每份法律文书<br />都专业高效</h1>
+      <h1 class="login-hero-title">AI 驱动的<br />法律文书生成平台</h1>
       <p class="login-hero-desc">面向中小律所的轻量级 AI 文书生成 + 案件管理工具。打开浏览器就能用，让每位律师都能高效执业。</p>
       <div class="login-features">
         <div class="login-feature">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:14px;height:14px"><path d="M7 13l-4-4 4-4"/><path d="M11 5l4 4-4 4"/><path d="M10 3L8 15"/></svg>
-          <span>AI 智能生成起诉状、答辩状、律师函等标准法律文书</span>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:16px;height:16px"><path d="M2 13h4l3 3 3-3h4V4a1 1 0 00-1-1H3a1 1 0 00-1 1v10z"/></svg>
+          <span>AI 一键生成起诉状、答辩状、律师函等标准法律文书</span>
         </div>
         <div class="login-feature">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:14px;height:14px"><circle cx="9" cy="9" r="8"/><path d="M6 9l2 2 4-4"/></svg>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:16px;height:16px"><circle cx="9" cy="9" r="8"/><path d="M6 9l2 2 4-4"/></svg>
           <span>法条引用自动校验，确保文书引用法条真实准确</span>
         </div>
         <div class="login-feature">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:14px;height:14px"><rect x="2" y="4" width="14" height="11" rx="1"/><path d="M6 8h6M6 11h4"/></svg>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:16px;height:16px"><rect x="2" y="4" width="14" height="11" rx="1"/><path d="M6 8h6M6 11h4"/></svg>
           <span>一键导出 Word / PDF，排版符合法院文书标准</span>
+        </div>
+        <div class="login-feature">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;flex-shrink:0;width:16px;height:16px"><path d="M3 4h2l1 9h9l1-7H6"/><circle cx="9" cy="20" r="1"/><circle cx="15" cy="20" r="1"/></svg>
+          <span>案件全流程管理，文书、文档、日程一目了然</span>
         </div>
       </div>
     </div>
