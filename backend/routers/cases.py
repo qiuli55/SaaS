@@ -22,6 +22,11 @@ def make_case_info(case: Case) -> CaseInfo:
         status=case.status,
         commission_date=case.commission_date,
         description=case.description,
+        client_id=case.client_id,
+        client_name=case.client.name if case.client else None,
+        plaintiff_detail=case.plaintiff_detail or "",
+        defendant_detail=case.defendant_detail or "",
+        court_name=case.court_name or "",
         created_at=case.created_at,
         updated_at=case.updated_at,
         document_count=len(case.documents) if case.documents else 0,
@@ -84,6 +89,10 @@ def create_case(
         subject_amount=req.subject_amount or 0,
         commission_date=req.commission_date,
         description=req.description,
+        client_id=req.client_id,
+        plaintiff_detail=req.plaintiff_detail or "",
+        defendant_detail=req.defendant_detail or "",
+        court_name=req.court_name or "",
         status=req.status or "进行中",
     )
     db.add(case)

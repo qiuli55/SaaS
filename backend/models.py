@@ -32,6 +32,9 @@ class Case(Base):
     case_type = Column(String(50), default="")
     plaintiff = Column(String(100), default="")
     defendant = Column(String(100), default="")
+    plaintiff_detail = Column(Text, default="")  # JSON: {address, id_card, phone, gender, birth...}
+    defendant_detail = Column(Text, default="")  # JSON: {address, legal_rep, id_card, phone...}
+    court_name = Column(String(100), default="")  # 管辖法院
     subject_amount = Column(DECIMAL(12, 2), default=0)
     status = Column(String(20), default="进行中")
     commission_date = Column(Date, nullable=True)

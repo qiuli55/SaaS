@@ -25,32 +25,94 @@
 
     <!-- 步骤2: 填写信息 -->
     <div class="card mb-6" v-if="form.doc_type">
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">步骤 2：确认案件信息并填写补充内容</h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">步骤 2：填写当事人详情（将精确填入文书）</h2>
 
-      <div class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg text-sm">
-          <div><span class="text-gray-400">原告：</span>{{ caseInfo.plaintiff }} <span class="text-green-600 ml-1">✓</span></div>
-          <div><span class="text-gray-400">被告：</span>{{ caseInfo.defendant }} <span class="text-green-600 ml-1">✓</span></div>
-          <div><span class="text-gray-400">案由：</span>{{ caseInfo.case_type }} <span class="text-green-600 ml-1">✓</span></div>
-          <div><span class="text-gray-400">标的额：</span>¥{{ formatMoney(caseInfo.subject_amount) }} <span class="text-green-600 ml-1">✓</span></div>
+      <div class="space-y-6">
+        <!-- 案件基本信息确认 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-blue-50 rounded-lg text-sm">
+          <div><span class="text-gray-500">原告：</span><strong>{{ caseInfo.plaintiff }}</strong></div>
+          <div><span class="text-gray-500">被告：</span><strong>{{ caseInfo.defendant }}</strong></div>
+          <div><span class="text-gray-500">案由：</span><strong>{{ caseInfo.case_type }}</strong></div>
+          <div><span class="text-gray-500">标的额：</span><strong>¥{{ formatMoney(caseInfo.subject_amount) }}</strong></div>
         </div>
 
+        <!-- 原告详细信息 -->
+        <div class="p-4 bg-orange-50 rounded-lg border border-orange-100">
+          <h3 class="font-semibold text-orange-800 mb-3">原告/申请人详细信息</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs text-gray-500">性别</label>
+              <select v-model="pInfo.gender" class="input-field text-sm">
+                <option value="">请选择</option>
+                <option>男</option><option>女</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-500">出生日期</label>
+              <input v-model="pInfo.birth" type="text" placeholder="如 1985年3月15日" class="input-field text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500">民族</label>
+              <input v-model="pInfo.ethnicity" type="text" placeholder="如 汉族" class="input-field text-sm" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-xs text-gray-500">身份证号</label>
+              <input v-model="pInfo.id_card" type="text" placeholder="原告身份证号码" class="input-field text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500">联系电话</label>
+              <input v-model="pInfo.phone" type="text" placeholder="手机号码" class="input-field text-sm" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="text-xs text-gray-500">住址</label>
+              <input v-model="pInfo.address" type="text" placeholder="详细住址，如 XX省XX市XX区XX路XX号" class="input-field text-sm" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 被告详细信息 -->
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 class="font-semibold text-gray-700 mb-3">被告/被申请人详细信息</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs text-gray-500">法定代表人</label>
+              <input v-model="dInfo.legal_rep" type="text" placeholder="公司法人代表姓名" class="input-field text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500">联系电话</label>
+              <input v-model="dInfo.phone" type="text" placeholder="被告联系电话" class="input-field text-sm" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-xs text-gray-500">住所地</label>
+              <input v-model="dInfo.address" type="text" placeholder="被告地址，如 XX省XX市XX区XX路XX号" class="input-field text-sm" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 法院 -->
         <div>
-          <label class="form-label">诉讼请求（建议填写）</label>
+          <label class="form-label">管辖法院</label>
+          <input v-model="form.court_name" type="text" placeholder="如 XX市XX区人民法院" class="input-field" />
+        </div>
+
+        <!-- 诉讼请求 -->
+        <div>
+          <label class="form-label">诉讼请求 <span class="text-red-500">*</span></label>
           <textarea
             v-model="form.claims"
             rows="4"
-            placeholder="例如：&#10;1. 请求被告支付货款20万元&#10;2. 请求被告承担本案诉讼费用"
+            placeholder="例如：&#10;1. 请求被告支付货款20万元及逾期利息&#10;2. 请求被告承担本案诉讼费用"
             class="input-field"
           ></textarea>
         </div>
 
+        <!-- 案件事实 -->
         <div>
-          <label class="form-label">案件事实描述（越详细 AI 生成越准确）</label>
+          <label class="form-label">案件事实描述 <span class="text-red-500">*</span></label>
           <textarea
             v-model="form.facts"
             rows="6"
-            :placeholder="'例如：' + caseInfo.plaintiff + '与' + caseInfo.defendant + '于2026年1月签订购销合同...'"
+            :placeholder="'详细描述案件经过，AI 将据此撰写「事实与理由」部分。例如：&#10;2026年1月15日，' + caseInfo.plaintiff + '与' + caseInfo.defendant + '签订购销合同，约定...'"
             class="input-field"
           ></textarea>
         </div>
@@ -127,12 +189,40 @@ const form = reactive({
   doc_type: '',
   claims: '',
   facts: '',
+  court_name: '',
+})
+
+const pInfo = reactive({
+  gender: '',
+  birth: '',
+  ethnicity: '',
+  id_card: '',
+  phone: '',
+  address: '',
+})
+
+const dInfo = reactive({
+  legal_rep: '',
+  phone: '',
+  address: '',
 })
 
 onMounted(async () => {
   try {
     const res = await api.get(`/cases/${caseId}`)
     caseInfo.value = res.data
+    // 回填已有详细信息
+    try {
+      if (res.data.plaintiff_detail) {
+        const pd = JSON.parse(res.data.plaintiff_detail)
+        Object.assign(pInfo, pd)
+      }
+      if (res.data.defendant_detail) {
+        const dd = JSON.parse(res.data.defendant_detail)
+        Object.assign(dInfo, dd)
+      }
+    } catch {}
+    if (res.data.court_name) form.court_name = res.data.court_name
   } catch (err) {
     console.error('加载案件信息失败', err)
   }
@@ -148,6 +238,9 @@ async function generateDocument() {
       doc_type: form.doc_type,
       claims: form.claims,
       facts: form.facts,
+      plaintiff_info: JSON.stringify(pInfo),
+      defendant_info: JSON.stringify(dInfo),
+      court_name: form.court_name,
     })
     result.value = res.data.data
   } catch (err) {

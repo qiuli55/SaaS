@@ -122,17 +122,85 @@ async def generate_document(
     if req.doc_type not in DOC_TYPES:
         raise HTTPException(status_code=400, detail=f"不支持的文书类型：{req.doc_type}")
 
+    # 解析当事人详细信息
+    import json as _json
+    p_info = {}
+    d_info = {}
+    try:
+        if req.plaintiff_info:
+            p_info = _json.loads(req.plaintiff_info)
+    except:
+        pass
+    try:
+        if req.defendant_info:
+            d_info = _json.loads(req.defendant_info)
+    except:
+        pass
+    # 兜底从案件数据中获取
+    try:
+        if not p_info and case.plaintiff_detail:
+            p_info = _json.loads(case.plaintiff_detail)
+    except:
+        pass
+    try:
+        if not d_info and case.defendant_detail:
+            d_info = _json.loads(case.defendant_detail)
+    except:
+        pass
+
+    court = req.court_name or case.court_name or "有管辖权的人民法院"
+
+    # 构建详细的当事人信息段
+    plaintiff_block = f"姓名：{case.plaintiff}"
+    if p_info.get("gender"): plaintiff_block += f"\n性别：{p_info['gender']}"
+    if p_info.get("birth"): plaintiff_block += f"\n出生日期：{p_info['birth']}"
+    if p_info.get("ethnicity"): plaintiff_block += f"\n民族：{p_info['ethnicity']}"
+    if p_info.get("id_card"): plaintiff_block += f"\n身份证号：{p_info['id_card']}"
+    if p_info.get("address"): plaintiff_block += f"\n住址：{p_info['address']}"
+    if p_info.get("phone"): plaintiff_block += f"\n联系电话：{p_info['phone']}"
+
+    defendant_block = f"名称：{case.defendant}"
+    if d_info.get("legal_rep"): defendant_block += f"\n法定代表人：{d_info['legal_rep']}"
+    if d_info.get("address"): defendant_block += f"\n住所地：{d_info['address']}"
+    if d_info.get("phone"): defendant_block += f"\n联系电话：{d_info['phone']}"
+
     # 构建提示词
-    user_prompt = f"""请根据以下信息生成一份{req.doc_type}：
+    user_prompt = f"""请根据以下【已确认的当事人信息】和【案件信息】，生成一份规范的{req.doc_type}。
 
+========================================
+【已确认的当事人信息 —— 必须原文使用，不得修改】
+========================================
+
+原告/申请人信息：
+{plaintiff_block}
+
+被告/被申请人信息：
+{defendant_block}
+
+========================================
+【案件基本信息】
+========================================
 案由：{case.case_type}
-原告/申请人：{case.plaintiff}
-被告/被申请人：{case.defendant}
 标的额：{case.subject_amount or '未填写'}元
-诉讼请求：{req.claims or '请根据案件事实合理推断'}
-案件事实：{req.facts or case.description or '请根据案由和当事人信息合理撰写'}
+管辖法院：{court}
 
-请严格遵守格式要求，写出完整的法律文书。"""
+========================================
+【诉讼请求 —— 必须逐项写入文书】
+========================================
+{req.claims or '（请根据案由和以下事实合理归纳诉讼请求）'}
+
+========================================
+【案件事实 —— 根据以下事实撰写「事实与理由」部分】
+========================================
+{req.facts or case.description or f'{case.plaintiff}与{case.defendant}因{case.case_type}产生争议。'}
+
+========================================
+【重要指令】
+1. 当事人信息必须从上方【已确认的当事人信息】中逐字复制，不得修改、简化或编造
+2. 缺失的信息（如住址未知）写「住址：不详」，不得编造
+3. 诉讼请求必须逐项写入，不得遗漏
+4. 法院名称使用上方指定的「{court}」
+5. 事实与理由基于上方提供的案件事实撰写，不得添加未提供的情节"""
 
     sp = SYSTEM_PROMPT.replace("{doc_type}", req.doc_type)
 
@@ -191,6 +259,9 @@ async def generate_document(
         form_data={
             "claims": req.claims,
             "facts": req.facts,
+            "plaintiff_info": p_info,
+            "defendant_info": d_info,
+            "court_name": court,
         },
         ai_raw_text=ai_text,
         final_content=final_content,

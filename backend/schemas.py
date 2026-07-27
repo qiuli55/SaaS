@@ -38,6 +38,9 @@ class CaseCreate(BaseModel):
     description: Optional[str] = ""
     status: Optional[str] = "进行中"
     client_id: Optional[int] = None
+    plaintiff_detail: Optional[str] = ""
+    defendant_detail: Optional[str] = ""
+    court_name: Optional[str] = ""
 
 
 class CaseUpdate(BaseModel):
@@ -49,6 +52,9 @@ class CaseUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     client_id: Optional[int] = None
+    plaintiff_detail: Optional[str] = None
+    defendant_detail: Optional[str] = None
+    court_name: Optional[str] = None
 
 
 class CaseInfo(BaseModel):
@@ -68,6 +74,9 @@ class CaseInfo(BaseModel):
     file_count: Optional[int] = 0
     client_id: Optional[int] = None
     client_name: Optional[str] = None
+    plaintiff_detail: Optional[str] = ""
+    defendant_detail: Optional[str] = ""
+    court_name: Optional[str] = ""
 
     class Config:
         from_attributes = True
@@ -86,6 +95,10 @@ class DocumentGenerate(BaseModel):
     doc_type: str
     claims: Optional[str] = ""
     facts: Optional[str] = ""
+    # 当事人详细信息
+    plaintiff_info: Optional[str] = ""   # JSON: {name, gender, birth, id_card, address, phone}
+    defendant_info: Optional[str] = ""   # JSON: {name, legal_rep, id_card, address, phone}
+    court_name: Optional[str] = ""       # 管辖法院
 
 
 class DocumentInfo(BaseModel):
