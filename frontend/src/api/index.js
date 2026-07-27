@@ -38,3 +38,20 @@ export function downloadFile(url, filename) {
   a.click()
   document.body.removeChild(a)
 }
+
+/** 带认证的下载（axios blob → 本地下载） */
+export async function authDownload(url, filename) {
+  try {
+    const res = await api.get(url, { responseType: 'blob' })
+    const blobUrl = URL.createObjectURL(res.data)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = filename || ''
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(blobUrl)
+  } catch (e) {
+    alert('下载失败：' + (e.response?.data?.detail || e.message))
+  }
+}

@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'; import { useRoute } from 'vue-router'; import api, { downloadFile } from '../api'
+import { ref, reactive, onMounted } from 'vue'; import { useRoute } from 'vue-router'; import api, { authDownload } from '../api'
 const route = useRoute(); const caseId = route.params.id
 const docTypes = ['民事起诉状','民事答辩状','律师函','代理词','法律意见书','上诉状','再审申请书','催收函']
 const caseInfo = ref({}); const generating = ref(false); const generateError = ref(''); const result = ref(null); const copied = ref(false)
@@ -91,7 +91,7 @@ async function generateDocument() {
     result.value = r.data.data } catch(e) { generateError.value = e.response?.data?.detail||'生成失败' } finally { generating.value = false }
 }
 function copyContent() { if(result.value?.final_content) { navigator.clipboard.writeText(result.value.final_content); copied.value = true; setTimeout(()=>copied.value=false, 2000) } }
-function downloadWord(id) { downloadFile(`/api/documents/${id}/download/docx`, `${form.doc_type}.docx`) }
-function downloadPdf(id) { downloadFile(`/api/documents/${id}/download/pdf`, `${form.doc_type}.pdf`) }
+function downloadWord(id) { authDownload(`/documents/${id}/download/docx`, `${form.doc_type}.docx`) }
+function downloadPdf(id) { authDownload(`/documents/${id}/download/pdf`, `${form.doc_type}.pdf`) }
 function formatMoney(v) { return Number(v||0).toLocaleString('zh-CN') }
 </script>
