@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex items-center space-x-4 mb-6">
+    <div class="flex items-center space-x-4 mb-4">
       <button @click="$router.back()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&larr;</button>
       <div class="flex-1">
         <h1 class="text-2xl font-bold text-gray-800">
@@ -16,17 +16,33 @@
       </div>
     </div>
 
+    <!-- 版本切换 -->
+    <div v-if="versions.length > 1" class="card mb-4">
+      <div class="flex items-center space-x-2 text-sm">
+        <span class="text-gray-500">历史版本：</span>
+        <button
+          v-for="v in versions"
+          :key="v.id"
+          @click="switchVersion(v.id)"
+          class="px-3 py-1 rounded-full border transition-colors"
+          :class="v.id === currentDocId
+            ? 'bg-primary-100 border-primary-400 text-primary-700 font-medium'
+            : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300'"
+        >
+          V{{ v.version }} <span class="text-xs ml-1">({{ formatDate(v.created_at) }})</span>
+        </button>
+      </div>
+    </div>
+
     <div v-if="loading" class="text-center py-12 text-gray-400">加载中...</div>
 
     <template v-else>
-      <!-- 文书正文 -->
       <div class="card">
         <div class="bg-gray-50 rounded-lg p-8 document-content min-h-[400px]">
           {{ doc.final_content }}
         </div>
       </div>
 
-      <!-- 法条校验 -->
       <div v-if="doc.verified_articles && doc.verified_articles.length > 0" class="card mt-4">
         <h3 class="font-semibold text-gray-800 mb-3">法条引用校验</h3>
         <ul class="space-y-1 text-sm">
@@ -45,25 +61,51 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api from '../api'
 
 const route = useRoute()
+const router = useRouter()
 const docId = route.params.id
+
 const doc = ref({})
 const loading = ref(true)
 const copied = ref(false)
+const versions = ref([])
+const currentDocId = ref(Number(docId))
 
 onMounted(async () => {
+  await loadDoc(docId)
+  await loadVersions()
+})
+
+async function loadDoc(id) {
+  loading.value = true
+  currentDocId.value = Number(id)
   try {
-    const res = await api.get(`/documents/${docId}`)
+    const res = await api.get(`/documents/${id}`)
     doc.value = res.data.data
   } catch (err) {
     console.error('加载文书失败', err)
   } finally {
     loading.value = false
   }
-})
+}
+
+async function loadVersions() {
+  try {
+    const res = await api.get(`/documents/${docId}/versions`)
+    versions.value = res.data.data || []
+  } catch (err) {
+    console.error('加载版本列表失败', err)
+  }
+}
+
+function switchVersion(versionId) {
+  if (versionId === currentDocId.value) return
+  router.replace(`/documents/${versionId}`)
+  loadDoc(versionId)
+}
 
 function copyContent() {
   if (doc.value?.final_content) {
@@ -74,11 +116,11 @@ function copyContent() {
 }
 
 function downloadWord() {
-  window.open(`/api/documents/${docId}/download/docx`, '_blank')
+  window.open(`/api/documents/${currentDocId.value}/download/docx`, '_blank')
 }
 
 function downloadPdf() {
-  window.open(`/api/documents/${docId}/download/pdf`, '_blank')
+  window.open(`/api/documents/${currentDocId.value}/download/pdf`, '_blank')
 }
 
 function formatDate(d) {

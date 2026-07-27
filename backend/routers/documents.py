@@ -423,6 +423,41 @@ async def generate_documents_batch(
     return {"code": 0, "data": {"total": len(req.entries), "results": results}}
 
 
+@router.get("/api/documents/{doc_id}/versions")
+def get_document_versions(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """获取同案件同类型的所有版本"""
+    doc = db.query(Document).filter(
+        Document.id == doc_id,
+        Document.user_id == current_user.id,
+    ).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="文书不存在")
+
+    versions = db.query(Document).filter(
+        Document.case_id == doc.case_id,
+        Document.doc_type == doc.doc_type,
+        Document.user_id == current_user.id,
+    ).order_by(Document.version.desc()).all()
+
+    return {
+        "code": 0,
+        "data": [
+            {
+                "id": v.id,
+                "version": v.version,
+                "status": v.status,
+                "created_at": v.created_at.isoformat() if v.created_at else "",
+                "final_content_preview": (v.final_content or "")[:200],
+            }
+            for v in versions
+        ],
+    }
+
+
 @router.get("/api/cases/{case_id}/documents")
 def list_documents(
     case_id: int,

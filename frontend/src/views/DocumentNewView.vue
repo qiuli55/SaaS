@@ -112,7 +112,7 @@
           <textarea
             v-model="form.facts"
             rows="6"
-            :placeholder="'详细描述案件经过，AI 将据此撰写「事实与理由」部分。例如：&#10;2026年1月15日，' + caseInfo.plaintiff + '与' + caseInfo.defendant + '签订购销合同，约定...'"
+            :placeholder="`详细描述案件经过，AI 将据此撰写「事实与理由」部分。例如：\n2026年1月15日，${caseInfo.plaintiff}与${caseInfo.defendant}签订购销合同，约定...`"
             class="input-field"
           ></textarea>
         </div>
