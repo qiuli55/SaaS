@@ -10,16 +10,16 @@
       <p class="login-hero-desc">面向中小律所的轻量级 AI 文书生成 + 案件管理工具。打开浏览器就能用，让每位律师都能高效执业。</p>
       <div class="login-features">
         <div class="login-feature">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 13l-4-4 4-4"/><path d="M11 5l4 4-4 4"/><path d="M10 3L8 15"/></svg>
-          AI 智能生成起诉状、答辩状、律师函等标准法律文书
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px;flex-shrink:0"><path d="M7 13l-4-4 4-4"/><path d="M11 5l4 4-4 4"/><path d="M10 3L8 15"/></svg>
+          <span>AI 智能生成起诉状、答辩状、律师函等标准法律文书</span>
         </div>
         <div class="login-feature">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="8"/><path d="M6 9l2 2 4-4"/></svg>
-          法条引用自动校验，确保文书引用法条真实准确
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px;flex-shrink:0"><circle cx="9" cy="9" r="8"/><path d="M6 9l2 2 4-4"/></svg>
+          <span>法条引用自动校验，确保文书引用法条真实准确</span>
         </div>
         <div class="login-feature">
-          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="14" height="11" rx="1"/><path d="M6 8h6M6 11h4"/></svg>
-          一键导出 Word / PDF，排版符合法院文书标准
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px;flex-shrink:0"><rect x="2" y="4" width="14" height="11" rx="1"/><path d="M6 8h6M6 11h4"/></svg>
+          <span>一键导出 Word / PDF，排版符合法院文书标准</span>
         </div>
       </div>
     </div>
