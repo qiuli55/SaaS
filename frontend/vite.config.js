@@ -9,6 +9,7 @@ export default defineConfig({
     hmr: {
       host: '10.137.81.78',
     },
+    allowedHosts: ['.cpolar.cn', 'localhost', '127.0.0.1', '10.137.81.78'],
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
