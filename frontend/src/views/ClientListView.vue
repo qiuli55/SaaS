@@ -2,7 +2,14 @@
   <div>
     <div class="page-header">
       <div><h1 class="page-title">客户通讯录</h1></div>
-      <router-link to="/clients/new" class="btn btn-primary">+ 添加客户</router-link>
+      <div style="display:flex;gap:8px">
+        <button @click="exportExcel" class="btn btn-outline btn-sm">导出 Excel</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
+          <input type="file" accept=".xlsx,.xls" hidden @change="importExcel" />
+          导入 Excel
+        </label>
+        <router-link to="/clients/new" class="btn btn-primary btn-sm">+ 添加客户</router-link>
+      </div>
     </div>
 
     <div class="filter-bar">
@@ -45,7 +52,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '../api'
+import api, { authDownload } from '../api'
 
 const clients = ref([]); const loading = ref(true); const keyword = ref(''); const page = ref(1); const pageSize = 20; const total = ref(0); let timer = null
 
@@ -58,4 +65,25 @@ async function fetchClients() {
   catch (e) { console.error('加载客户列表失败', e) } finally { loading.value = false }
 }
 function parseTags(t) { try { return JSON.parse(t) } catch { return t ? t.split(',') : [] } }
+
+async function exportExcel() {
+  try { authDownload('/clients/export', '客户通讯录.xlsx') }
+  catch(e) { alert('导出失败') }
+}
+
+async function importExcel(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  if (!confirm(`确认从「${file.name}」导入客户？`)) { e.target.value = ''; return }
+  const fd = new FormData()
+  fd.append('file', file)
+  try {
+    const r = await api.post('/clients/import', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    alert(`导入完成：新增 ${r.data.data.created} 条，跳过 ${r.data.data.skipped} 条（重复）`)
+    fetchClients()
+  } catch(e) {
+    alert('导入失败：' + (e.response?.data?.detail || e.message))
+  }
+  e.target.value = ''
+}
 </script>
