@@ -23,6 +23,31 @@ DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"
 # 文书类型与格式配置
 DOC_TYPES = ["民事起诉状", "民事答辩状", "律师函", "代理词", "法律意见书", "上诉状", "再审申请书", "催收函"]
 
+# AI 输出的前导废话关键词（匹配到则裁掉前面全部内容）
+AI_PREFIX_JUNK = [
+    "好的，", "作为一名", "根据您提供", "请注意", "以下是为您",
+    "我将根据", "让我来为您", "好的，我将",
+]
+
+
+def clean_ai_output(text: str) -> str:
+    """裁掉 AI 输出的前导废话，保留法律文书正文"""
+    lines = text.split("\n")
+    start_idx = 0
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        # 找到文书标题行（包含文书类型关键词）
+        if any(doc_type in stripped for doc_type in DOC_TYPES):
+            start_idx = i
+            break
+        # 如果不是前导废话行，也从这里开始
+        if not any(stripped.startswith(junk) for junk in AI_PREFIX_JUNK):
+            start_idx = i
+            break
+    return "\n".join(lines[start_idx:]).strip()
+
 # 核心法条库（用于校验）
 LAW_ARTICLES = {
     "民法典": {
@@ -242,6 +267,9 @@ async def generate_document(
     else:
         articles_text = ai_text
 
+    # 清理 AI 前缀废话
+    final_content = clean_ai_output(final_content)
+
     # 法条校验
     verified_articles = verify_articles(articles_text)
 
@@ -365,6 +393,7 @@ async def generate_documents_batch(
                     final_content = parts[0].strip()
                     articles_text = parts[1].strip() if len(parts) > 1 else ""
 
+                final_content = clean_ai_output(final_content)
                 verified_articles = verify_articles(articles_text)
 
                 # 创建临时案件存储批量生成的文书
