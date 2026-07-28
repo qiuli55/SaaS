@@ -2,7 +2,7 @@ import os
 import re
 import json
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -12,10 +12,30 @@ from pydantic import BaseModel
 
 from database import get_db
 from models import Document, Case, User
-from schemas import DocumentGenerate, DocumentInfo
+from schemas import DocumentGenerate, DocumentInfo, DocumentUpdate
 from auth import get_current_user
+from limiter import limiter
 
 router = APIRouter(tags=["文书"])
+_TESTING = os.environ.get("TESTING") == "1"
+
+
+def _user_key(request: Request) -> str:
+    """从 JWT token 提取用户 ID（账号维度限流 key），解析失败回退 IP。"""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return f"user:anon:{request.client.host if request.client else '?'}"
+    try:
+        from jose import jwt
+        payload = jwt.decode(
+            auth[7:], os.getenv("SECRET_KEY", ""),
+            algorithms=[os.getenv("ALGORITHM", "HS256")],
+            options={"verify_exp": False},
+        )
+        sub = payload.get("sub", "")
+        return f"user:{sub}" if sub else f"user:bad:{request.client.host}"
+    except Exception:
+        return f"user:err:{request.client.host if request.client else '?'}"
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
@@ -130,9 +150,17 @@ def verify_articles(text: str) -> list[dict]:
     return results
 
 
+if _TESTING:
+    gen_deco = lambda f: f
+else:
+    gen_deco = lambda f: limiter.limit("10/minute")(f)
+
+
 @router.post("/api/documents/generate")
+@gen_deco
 async def generate_document(
     req: DocumentGenerate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -167,12 +195,12 @@ async def generate_document(
     try:
         if not p_info and case.plaintiff_detail:
             p_info = _json.loads(case.plaintiff_detail)
-    except:
+    except (_json.JSONDecodeError, TypeError):
         pass
     try:
         if not d_info and case.defendant_detail:
             d_info = _json.loads(case.defendant_detail)
-    except:
+    except (_json.JSONDecodeError, TypeError):
         pass
 
     court = req.court_name or case.court_name or "有管辖权的人民法院"
@@ -315,8 +343,10 @@ class BatchGenerate(BaseModel):
 
 
 @router.post("/api/documents/generate-batch")
+@limiter.limit("3/minute")
 async def generate_documents_batch(
     req: BatchGenerate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -728,7 +758,7 @@ def download_pdf(
 @router.put("/api/documents/{doc_id}")
 def update_document(
     doc_id: int,
-    req: dict,
+    req: DocumentUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -740,10 +770,10 @@ def update_document(
     if not doc:
         raise HTTPException(status_code=404, detail="文书不存在")
 
-    if "final_content" in req:
-        doc.final_content = req["final_content"]
-    if "status" in req:
-        doc.status = req["status"]
+    if req.final_content is not None:
+        doc.final_content = req.final_content
+    if req.status is not None:
+        doc.status = req.status
 
     db.commit()
     db.refresh(doc)

@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <div><h1 class="page-title">日历日程</h1></div>
-      <button @click="showAddModal=true" class="btn btn-accent btn-sm">+ 添加日程</button>
+      <button @click="openAddModal" class="btn btn-accent btn-sm">+ 添加日程</button>
     </div>
 
     <!-- 月份切换 -->
@@ -134,6 +134,13 @@ function prevMonth() { if(currentMonth.value===1){currentMonth.value=12;currentY
 function nextMonth() { if(currentMonth.value===12){currentMonth.value=1;currentYear.value++}else{currentMonth.value++}; fetchEvents(); selectedDate.value='' }
 function goToday() { const n=new Date(); currentYear.value=n.getFullYear(); currentMonth.value=n.getMonth()+1; selectedDate.value=n.toISOString().slice(0,10); fetchEvents() }
 function selectDate(d) { selectedDate.value = d }
+
+function openAddModal() {
+  if (selectedDate.value) {
+    newEvent.event_date = selectedDate.value + 'T09:00'
+  }
+  showAddModal.value = true
+}
 
 function editEvent(ev) {
   editingId.value = ev.id

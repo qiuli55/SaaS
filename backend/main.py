@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 # 使用 python-dotenv 加载 .env
 try:
@@ -27,6 +29,7 @@ except ImportError:
 from database import engine, Base, SessionLocal
 from sqlalchemy import text
 from routers import user, cases, documents, files, clients, schedules
+from limiter import limiter
 
 
 @asynccontextmanager
@@ -43,14 +46,25 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — 生产环境应配置白名单
+# CORS — 智能匹配：localhost、局域网 IP、所有 cpolar 子域名
+_CORS_REGEX = os.getenv(
+    "CORS_REGEX",
+    r"https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?|"
+    r"https?://.+\.cpolar\.(top|cn)(:\d+)?"
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=_CORS_REGEX,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+# Rate Limiting — 全局限流，敏感接口在各自 router 中叠加更严格的限制
+if os.environ.get("TESTING") != "1":
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # 注册路由
 app.include_router(user.router)

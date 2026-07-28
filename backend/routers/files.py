@@ -16,8 +16,18 @@ from auth import get_current_user
 
 router = APIRouter(tags=["文件"])
 
-UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
+# 上传目录：基于项目根目录的绝对路径，避免工作目录变化导致文件丢失
+_BACKEND_DIR = Path(__file__).parent.parent
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", str(_BACKEND_DIR / "uploads"))
 MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE", "52428800"))  # 50MB
+
+# 允许上传的文件后缀白名单（法律行业常用格式）
+ALLOWED_UPLOAD_EXT = {
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
+    ".txt", ".csv", ".mp3", ".wav", ".mp4",
+    ".zip", ".rar",
+}
 
 # 确保上传目录存在
 Path(UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
@@ -52,7 +62,13 @@ async def upload_files(
         await upload_file.seek(0)
 
         # 生成唯一文件名，防止覆盖
-        ext = Path(upload_file.filename).suffix
+        # 安全处理：取 basename 防路径穿越，后缀白名单校验
+        safe_fname = os.path.basename(upload_file.filename or "file")
+        ext = Path(safe_fname).suffix.lower()
+        if ext not in ALLOWED_UPLOAD_EXT:
+            raise HTTPException(status_code=400, detail=f"不支持的文件类型：{ext}，允许：{', '.join(sorted(ALLOWED_UPLOAD_EXT))}")
+        if not ext:
+            raise HTTPException(status_code=400, detail="无法识别文件类型，请确保文件名包含后缀")
         unique_name = f"{uuid.uuid4()}{ext}"
         relative_path = f"cases/{case_id}/{unique_name}"
         absolute_path = os.path.join(UPLOAD_DIR, relative_path)

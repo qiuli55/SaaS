@@ -221,6 +221,11 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=32)
 
 
+class DocumentUpdate(BaseModel):
+    final_content: Optional[str] = None
+    status: Optional[str] = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
