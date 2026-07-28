@@ -8,15 +8,15 @@
     <!-- 弹窗 -->
     <div v-if="open" class="float-panel" :style="panelStyle" @mousedown="bringToFront">
       <!-- 标题栏（可拖拽） -->
-      <div class="float-bar" @mousedown.prevent="startDrag">
+      <div class="float-bar" @mousedown.prevent="startDrag($event)">
         <span class="float-title">🤖 AI 法律助手</span>
         <div class="float-actions">
           <button class="float-action" @click="toggleSize" :title="expanded ? '缩小' : '放大'">
             <svg v-if="expanded" width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12v3h3"/><path d="M15 6V3h-3"/><path d="M13 3l-4 4"/><path d="M5 15l4-4"/></svg>
             <svg v-else width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9v5h5"/><path d="M15 9V4h-5"/></svg>
           </button>
-          <button class="float-action" @click.stop="open = false" title="最小化">—</button>
-          <button class="float-action float-close" @click.stop="open = false" title="关闭">✕</button>
+          <button class="float-action" @click.stop="minimizeChat" title="最小化">—</button>
+          <button class="float-action float-close" @click.stop="closeChat" title="关闭">✕</button>
         </div>
       </div>
 
@@ -73,6 +73,8 @@ const panelStyle = ref({})
 
 const quickHints = ['起诉条件是什么？', '如何计算违约金？', '劳动争议仲裁流程', '离婚财产怎么分割？']
 
+function closeChat() { open.value = false }
+function minimizeChat() { open.value = false }
 function openChat() {
   open.value = true
   // 默认位置：右下角
@@ -104,6 +106,7 @@ function updateStyle() {
 }
 
 function startDrag(e) {
+  if (e.target.closest('.float-action')) return  // 不拖拽按钮
   dragging.value = true
   dragStart.x = e.clientX - panelPos.x
   dragStart.y = e.clientY - panelPos.y
