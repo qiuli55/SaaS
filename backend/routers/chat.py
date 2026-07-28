@@ -3,7 +3,6 @@ import os, json, httpx
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from auth import get_current_user
-from limiter import limiter
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -33,7 +32,6 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/send")
-@limiter.limit("10/minute")
 async def chat_send(req: ChatRequest, user=Depends(get_current_user)):
     """发送消息给 AI 律师助手"""
     if not DEEPSEEK_API_KEY:
