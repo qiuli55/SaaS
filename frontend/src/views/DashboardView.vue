@@ -21,6 +21,11 @@
           <router-link to="/clients" class="qchip"><span class="qic n"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="6" r="3"/><path d="M2 16v-1a4 4 0 014-4h2a4 4 0 014 4v1"/><circle cx="14" cy="8" r="2"/><path d="M11 16v-1a3 3 0 013-3"/></svg></span><span class="qlab">客户管理</span></router-link>
           <router-link to="/history" class="qchip"><span class="qic n"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="8"/><path d="M9 5v4l3 3"/></svg></span><span class="qlab">历史记录</span></router-link>
         </div>
+        <div class="qsep"></div>
+        <div class="qgrp">
+          <span class="qgrp-label">智能助手</span>
+          <button class="qchip" style="background:linear-gradient(135deg,var(--accent),var(--navy-600));color:#fff;border-color:transparent" onclick="window.__toggleFloatingChat()"><span class="qic" style="background:rgba(255,255,255,.18)">✨</span><span class="qlab">AI 法律助手</span></button>
+        </div>
       </div>
     </div>
 

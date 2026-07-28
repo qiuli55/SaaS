@@ -57,7 +57,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, watch } from 'vue'
+import { ref, reactive, nextTick, onMounted } from 'vue'
+
+onMounted(() => {
+  window.__toggleFloatingChat = () => { open.value = !open.value }
+})
 import api from '../api'
 
 const open = ref(false)
