@@ -15,8 +15,8 @@
             <svg v-if="expanded" width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12v3h3"/><path d="M15 6V3h-3"/><path d="M13 3l-4 4"/><path d="M5 15l4-4"/></svg>
             <svg v-else width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9v5h5"/><path d="M15 9V4h-5"/></svg>
           </button>
-          <button class="float-action" @click="open = false" title="最小化">—</button>
-          <button class="float-action float-close" @click="open = false" title="关闭">✕</button>
+          <button class="float-action" @click.stop="open = false" title="最小化">—</button>
+          <button class="float-action float-close" @click.stop="open = false" title="关闭">✕</button>
         </div>
       </div>
 
@@ -158,7 +158,7 @@ function resizeTextarea(e) {
 function onScroll() {}
 </script>
 
-<style scoped>
+<style>
 .float-btn {
   position: fixed; bottom: 28px; right: 28px; z-index: 9998;
   width: 52px; height: 52px; border-radius: 50%;
