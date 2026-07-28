@@ -29,6 +29,10 @@
         </router-link>
 
         <div class="nav-zone">文书中心</div>
+        <router-link to="/documents" class="sidebar-link" @click="sidebarOpen=false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h7l4 4v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M11 2v4h4"/></svg>
+          文书管理
+        </router-link>
         <router-link to="/documents/batch" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13h4l3 3 3-3h4V3a1 1 0 00-1-1H3a1 1 0 00-1 1v10z"/></svg>
           批量生成
@@ -50,6 +54,11 @@
         <router-link to="/history" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="8"/><path d="M9 5v4l3 2"/></svg>
           生成历史
+        </router-link>
+        <div class="nav-zone">智能工具</div>
+        <router-link to="/chat" class="sidebar-link" @click="sidebarOpen=false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l6 2v5c0 4-3 6-6 8-3-2-6-4-6-8V4l6-2z"/><path d="M6.5 9l2 2 3.5-4"/></svg>
+          AI 法律助手
         </router-link>
       </nav>
 

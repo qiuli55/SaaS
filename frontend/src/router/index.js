@@ -49,6 +49,11 @@ const routes = [
     component: () => import('../views/BatchGenerateView.vue'),
   },
   {
+    path: '/documents',
+    name: 'DocumentsList',
+    component: () => import('../views/DocumentsListView.vue'),
+  },
+  {
     path: '/documents/:id',
     name: 'DocumentView',
     component: () => import('../views/DocumentViewView.vue'),
@@ -77,6 +82,11 @@ const routes = [
     path: '/calendar',
     name: 'Calendar',
     component: () => import('../views/CalendarView.vue'),
+  },
+  {
+    path: '/chat',
+    name: 'AIChat',
+    component: () => import('../views/AIChatView.vue'),
   },
   {
     path: '/:pathMatch(.*)*',

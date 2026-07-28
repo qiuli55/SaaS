@@ -28,7 +28,7 @@ except ImportError:
 
 from database import engine, Base, SessionLocal
 from sqlalchemy import text
-from routers import user, cases, documents, files, clients, schedules
+from routers import user, cases, documents, files, clients, schedules, chat
 from limiter import limiter
 
 
@@ -73,6 +73,7 @@ app.include_router(documents.router)
 app.include_router(files.router)
 app.include_router(clients.router)
 app.include_router(schedules.router)
+app.include_router(chat.router)
 
 
 # 静态前端文件（部署时启用）
