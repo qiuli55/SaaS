@@ -88,12 +88,14 @@
         <router-view />
       </div>
     </div>
+    <FloatingChat />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import FloatingChat from './components/FloatingChat.vue'
 
 const route = useRoute()
 const router = useRouter()
