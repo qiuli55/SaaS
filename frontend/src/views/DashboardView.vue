@@ -1,118 +1,109 @@
 <template>
   <div>
-    <!-- 统计卡片 -->
-    <div class="stats-grid">
-      <div class="stat-card stat-card-navy">
-        <div class="stat-label">案件总数</div>
-        <div class="stat-value">{{ stats.totalCases }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">本月新增 {{ stats.newThisMonth || 0 }}</div>
-      </div>
-      <div class="stat-card stat-card-accent">
-        <div class="stat-label">进行中</div>
-        <div class="stat-value">{{ stats.activeCases }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">待处理案件</div>
-      </div>
-      <div class="stat-card stat-card-success">
-        <div class="stat-label">文书生成</div>
-        <div class="stat-value">{{ stats.documentsGenerated }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">累计生成份数</div>
-      </div>
-      <div class="stat-card stat-card-warning">
-        <div class="stat-label">待办事项</div>
-        <div class="stat-value">{{ stats.pendingTodos }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">未完成日程</div>
+    <!-- 快捷工具栏 -->
+    <div class="quickbar">
+      <div class="quickbar-row">
+        <div class="qgrp">
+          <span class="qgrp-label">文书智能</span>
+          <router-link to="/cases" class="qchip"><span class="qic b"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 2h7l4 4v10H4z"/><path d="M11 2v4h4"/></svg></span><span class="qlab">生成文书</span></router-link>
+          <router-link to="/documents/batch" class="qchip"><span class="qic s"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 2L2 6l7 4 7-4-7-4z"/><path d="M2 10l7 4 7-4"/><path d="M2 14l7 4 7-4"/></svg></span><span class="qlab">批量生成</span></router-link>
+        </div>
+        <div class="qsep"></div>
+        <div class="qgrp">
+          <span class="qgrp-label">案件工作</span>
+          <router-link to="/cases/new" class="qchip"><span class="qic n"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="8"/><path d="M9 6v6M6 9h6"/></svg></span><span class="qlab">新建案件</span></router-link>
+          <router-link to="/cases" class="qchip"><span class="qic b"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h4l2 2h6a1 1 0 011 1v9H3z"/></svg></span><span class="qlab">案件管理</span></router-link>
+          <router-link to="/calendar" class="qchip"><span class="qic w"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="12" height="12" rx="1"/><path d="M3 8h12M6 2v3M12 2v3"/></svg></span><span class="qlab">添加日程</span></router-link>
+        </div>
+        <div class="qsep"></div>
+        <div class="qgrp">
+          <span class="qgrp-label">资源中心</span>
+          <router-link to="/clients" class="qchip"><span class="qic n"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="6" r="3"/><path d="M2 16v-1a4 4 0 014-4h2a4 4 0 014 4v1"/><circle cx="14" cy="8" r="2"/><path d="M11 16v-1a3 3 0 013-3"/></svg></span><span class="qlab">客户管理</span></router-link>
+          <router-link to="/history" class="qchip"><span class="qic n"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="8"/><path d="M9 5v4l3 3"/></svg></span><span class="qlab">历史记录</span></router-link>
+        </div>
       </div>
     </div>
 
-    <!-- 快捷操作 -->
-    <div class="quick-actions mb-8">
-      <router-link to="/cases/new" class="quick-action" style="text-decoration:none;color:inherit">
-        <div class="quick-action-icon" style="background:#e3edf5">
-          <svg viewBox="0 0 22 22" fill="none" stroke="#2d5a87" stroke-width="1.5"><circle cx="11" cy="11" r="9"/><path d="M11 7v8M7 11h8"/></svg>
-        </div>
-        <div class="flex-1">
-          <div class="quick-action-label">新建案件</div>
-          <div class="quick-action-desc">创建新的法律案件</div>
-        </div>
-      </router-link>
-      <router-link to="/cases" class="quick-action" style="text-decoration:none;color:inherit">
-        <div class="quick-action-icon" style="background:#dbeafe">
-          <svg viewBox="0 0 22 22" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M18 20V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14"/><path d="M2 10h18"/></svg>
-        </div>
-        <div class="flex-1">
-          <div class="quick-action-label">案件管理</div>
-          <div class="quick-action-desc">查看和搜索所有案件</div>
-        </div>
-      </router-link>
-      <router-link to="/documents/batch" class="quick-action" style="text-decoration:none;color:inherit">
-        <div class="quick-action-icon" style="background:#ecfdf5">
-          <svg viewBox="0 0 22 22" fill="none" stroke="#059669" stroke-width="1.5"><path d="M3 15h5l4 4 4-4h5V4a1 1 0 00-1-1H4a1 1 0 00-1 1v11z"/></svg>
-        </div>
-        <div class="flex-1">
-          <div class="quick-action-label">批量生成</div>
-          <div class="quick-action-desc">一次生成多份同类文书</div>
-        </div>
-      </router-link>
-      <router-link to="/calendar" class="quick-action" style="text-decoration:none;color:inherit">
-        <div class="quick-action-icon" style="background:#fef3c7">
-          <svg viewBox="0 0 22 22" fill="none" stroke="#d97706" stroke-width="1.5"><rect x="3" y="4" width="16" height="16" rx="1"/><path d="M3 9h16"/><path d="M8 2v4"/><path d="M14 2v4"/></svg>
-        </div>
-        <div class="flex-1">
-          <div class="quick-action-label">日历日程</div>
-          <div class="quick-action-desc">开庭、举证、立案时间管理</div>
-        </div>
-      </router-link>
-      <router-link to="/clients" class="quick-action" style="text-decoration:none;color:inherit">
-        <div class="quick-action-icon" style="background:#fce4ec">
-          <svg viewBox="0 0 22 22" fill="none" stroke="#e91e63" stroke-width="1.5"><circle cx="8" cy="7" r="4"/><path d="M2 20v-1a5 5 0 015-5h2a5 5 0 015 5v1"/><circle cx="16" cy="9" r="3"/><path d="M13 20v-1a4 4 0 014-4"/></svg>
-        </div>
-        <div class="flex-1">
-          <div class="quick-action-label">客户管理</div>
-          <div class="quick-action-desc">客户通讯录与案件关联</div>
-        </div>
-      </router-link>
-      <router-link to="/history" class="quick-action" style="text-decoration:none;color:inherit">
-        <div class="quick-action-icon" style="background:#ede7f6">
-          <svg viewBox="0 0 22 22" fill="none" stroke="#7c4dff" stroke-width="1.5"><circle cx="11" cy="11" r="9"/><path d="M11 6v5l3 3"/></svg>
-        </div>
-        <div class="flex-1">
-          <div class="quick-action-label">历史记录</div>
-          <div class="quick-action-desc">查看所有生成过的文书</div>
-        </div>
-      </router-link>
+    <!-- 分区一：数据概览 -->
+    <div class="zone-title"><span class="bar"></span><h2>数据概览</h2></div>
+    <div class="stats-row">
+      <div class="stat-box k1"><div class="l">案件总数</div><div class="v">{{ stats.totalCases }}</div><div class="d">本月新增 {{ stats.newThisMonth || 0 }} 件</div></div>
+      <div class="stat-box k2"><div class="l">进行中</div><div class="v">{{ stats.activeCases }}</div><div class="d">待处理案件</div></div>
+      <div class="stat-box k3"><div class="l">本月文书</div><div class="v">{{ stats.documentsGenerated }}</div><div class="d">累计生成份数</div></div>
+      <div class="stat-box k4"><div class="l">待办提醒</div><div class="v">{{ stats.pendingTodos }}</div><div class="d">未完成日程</div></div>
     </div>
 
-    <!-- 最近案件 -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">最近案件</span>
-        <router-link to="/cases" class="btn btn-ghost btn-sm">查看全部</router-link>
-      </div>
-      <div class="card-body" style="padding:0">
-        <div v-if="recentCases.length === 0" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
-          <div style="font-size:36px;margin-bottom:12px">📋</div>
-          <div style="font-size:14px">暂无案件，点击上方「新建案件」开始</div>
+    <div class="dashboard-grid">
+      <!-- 左栏 -->
+      <div class="dashboard-stack">
+        <!-- 分区二：我的案件 -->
+        <div>
+          <div class="zone-title">
+            <span class="bar"></span><h2>最近案件</h2>
+            <router-link to="/cases" class="more">查看全部 ›</router-link>
+          </div>
+          <div class="card">
+            <div v-if="recentCases.length === 0" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
+              <div style="font-size:36px;margin-bottom:12px">📋</div>
+              <div style="font-size:14px">暂无案件，点击「新建案件」开始</div>
+            </div>
+            <div v-for="c in recentCases" :key="c.id">
+              <router-link :to="`/cases/${c.id}`" class="case-row">
+                <div class="case-ic">{{ (c.case_type || '案件').slice(0,2) }}</div>
+                <div class="case-main">
+                  <div class="t">{{ c.case_type || '未命名' }}</div>
+                  <div class="m" v-if="c.subject_amount">标的额 ¥{{ formatMoney(c.subject_amount) }} · 委托 {{ (c.created_at||'').slice(0,10) }}</div>
+                </div>
+                <span :class="statusBadgeClass(c.status)">{{ c.status || '未知' }}</span>
+                <span class="case-go">›</span>
+              </router-link>
+            </div>
+          </div>
         </div>
-        <table v-else class="table">
-          <thead>
-            <tr>
-              <th>案件编号</th>
-              <th>案由</th>
-              <th>当事人</th>
-              <th>标的额</th>
-              <th>状态</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in recentCases" :key="c.id" @click="$router.push(`/cases/${c.id}`)">
-              <td style="color:var(--navy-800);font-weight:500;font-family:'JetBrains Mono',monospace;font-size:13px">{{ c.case_no }}</td>
-              <td>{{ c.case_type }}</td>
-              <td style="color:var(--text-secondary);font-size:13px">{{ c.plaintiff }} vs {{ c.defendant }}</td>
-              <td style="font-family:'JetBrains Mono',monospace;font-weight:500">¥{{ formatMoney(c.subject_amount) }}</td>
-              <td><span :class="statusBadge(c.status)">{{ c.status }}</span></td>
-            </tr>
-          </tbody>
-        </table>
+
+        <!-- 分区三：近期待办 -->
+        <div>
+          <div class="zone-title"><span class="bar"></span><h2>近期待办</h2></div>
+          <div class="card" style="padding:24px">
+            <div class="tl">
+              <div v-if="upcomingSchedules.length === 0" style="text-align:center;padding:24px;color:var(--text-muted);font-size:14px">
+                暂无待办事项
+              </div>
+              <div v-for="item in upcomingSchedules" :key="item.id" class="tl-item">
+                <div class="tl-time"><b>{{ item.days }}</b>{{ item.time }}</div>
+                <div class="tl-line"></div>
+                <div class="tl-body">
+                  <div class="tt">{{ item.title }}</div>
+                  <div class="td">{{ item.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右栏 -->
+      <div class="dashboard-stack">
+        <!-- 分区五：重点客户 -->
+        <div>
+          <div class="zone-title">
+            <span class="bar"></span><h2>重点客户</h2>
+            <router-link to="/clients" class="more">查看全部 ›</router-link>
+          </div>
+          <div class="card">
+            <div v-if="keyClients.length === 0" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
+              <div style="font-size:14px">暂无客户数据</div>
+            </div>
+            <router-link v-for="c in keyClients" :key="c.id" :to="`/clients/${c.id}`" class="client-mini">
+              <div class="ci">{{ (c.name || '无')[0] }}</div>
+              <div class="cm">
+                <div class="t">{{ c.name }}</div>
+                <div class="m">{{ c.company || '个人' }} · {{ c.case_count || 0 }} 件关联案件</div>
+              </div>
+              <span class="badge" :class="c.case_count > 0 ? 'badge-success' : 'badge-neutral'">{{ c.case_count > 0 ? '活跃' : '常规' }}</span>
+            </router-link>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -124,6 +115,17 @@ import api from '../api'
 
 const stats = ref({ totalCases: 0, activeCases: 0, documentsGenerated: 0, pendingTodos: 0, newThisMonth: 0 })
 const recentCases = ref([])
+const upcomingSchedules = ref([])
+const keyClients = ref([])
+
+function statusBadgeClass(status) {
+  if (status === '进行中') return 'badge badge-success'
+  if (status === '待立案') return 'badge badge-warning'
+  if (status === '已结案') return 'badge badge-neutral'
+  return 'badge badge-info'
+}
+
+function formatMoney(v) { return Number(v || 0).toLocaleString('zh-CN') }
 
 onMounted(async () => {
   try {
@@ -136,17 +138,40 @@ onMounted(async () => {
 
     const history = await api.get('/documents/history', { params: { page_size: 1 } })
     stats.value.documentsGenerated = history.data.data.total || 0
+
+    // 加载日程（近期待办）
+    try {
+      const sch = await api.get('/schedules', { params: { page_size: 5 } })
+      const now = new Date()
+      const oneWeek = 7 * 24 * 60 * 60 * 1000
+      const items = sch.data.items || []
+      upcomingSchedules.value = items
+        .filter(s => {
+          const d = new Date(s.schedule_date)
+          return d >= now && d - now <= oneWeek
+        })
+        .sort((a, b) => new Date(a.schedule_date) - new Date(b.schedule_date))
+        .map(s => {
+          const d = new Date(s.schedule_date)
+          const diff = Math.ceil((d - now) / (24 * 60 * 60 * 1000))
+          return {
+            id: s.id,
+            days: diff === 0 ? '今天' : (diff === 1 ? '明天' : diff + '天后'),
+            time: s.schedule_date ? s.schedule_date.slice(11, 16) : '',
+            title: s.title || '未命名日程',
+            desc: s.description || '',
+          }
+        })
+      stats.value.pendingTodos = upcomingSchedules.value.length
+    } catch (e) { console.error('日程加载失败', e) }
+
+    // 加载客户
+    try {
+      const cl = await api.get('/clients', { params: { page_size: 5 } })
+      keyClients.value = cl.data.items || []
+    } catch (e) { console.error('客户加载失败', e) }
   } catch (err) {
     console.error('加载工作台数据失败', err)
   }
 })
-
-function statusBadge(status) {
-  const map = { '进行中': 'badge badge-info', '已结案': 'badge badge-success', '待立案': 'badge badge-warning' }
-  return map[status] || 'badge badge-neutral'
-}
-
-function formatMoney(v) {
-  return Number(v || 0).toLocaleString('zh-CN')
-}
 </script>
