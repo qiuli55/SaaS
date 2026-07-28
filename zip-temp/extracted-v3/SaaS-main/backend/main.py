@@ -3,8 +3,8 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 # 使用 python-dotenv 加载 .env
 try:
@@ -27,6 +27,7 @@ except ImportError:
 from database import engine, Base, SessionLocal
 from sqlalchemy import text
 from routers import user, cases, documents, files, clients, schedules, chat
+from limiter import limiter
 
 
 @asynccontextmanager
@@ -58,6 +59,11 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+# Rate Limiting — 全局限流，敏感接口在各自 router 中叠加更严格的限制
+if os.environ.get("TESTING") != "1":
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # 注册路由
 app.include_router(user.router)
 app.include_router(cases.router)
@@ -68,26 +74,8 @@ app.include_router(schedules.router)
 app.include_router(chat.router)
 
 
-# 静态前端文件（部署时启用）
-FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
-if FRONTEND_DIST.exists():
-    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
-
-    @app.get("/{full_path:path}")
-    def serve_spa(full_path: str):
-        # API 请求已经走 router，这里只处理前端路由
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
-            return {"error": "not found"}
-        file_path = FRONTEND_DIST / full_path
-        if file_path.is_file():
-            return FileResponse(file_path)
-        return FileResponse(FRONTEND_DIST / "index.html")
-
-
 @app.get("/")
 def root():
-    if FRONTEND_DIST.exists():
-        return FileResponse(FRONTEND_DIST / "index.html")
     return {"name": "法律AI助手 API", "version": "1.0.0", "status": "running"}
 
 
