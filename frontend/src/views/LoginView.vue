@@ -42,7 +42,20 @@
 
           <div class="form-group">
             <label class="form-label">密码</label>
-            <input v-model="form.password" type="password" placeholder="请输入密码（至少6位）" class="form-input" required />
+            <div style="position:relative">
+              <input v-model="form.password" :type="showPwd ? 'text' : 'password'" placeholder="请输入密码（至少6位）" class="form-input" required style="padding-right:40px" />
+              <button type="button" @click="showPwd = !showPwd" class="pwd-toggle" :title="showPwd ? '隐藏密码' : '显示密码'">
+                <svg v-if="showPwd" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+                  <path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/>
+                  <circle cx="10" cy="10" r="3"/>
+                </svg>
+                <svg v-else viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+                  <path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/>
+                  <circle cx="10" cy="10" r="3"/>
+                  <line x1="2" y1="18" x2="18" y2="2"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <template v-if="isRegister">
@@ -83,6 +96,7 @@ const router = useRouter()
 const loading = ref(false)
 const error = ref('')
 const isRegister = ref(false)
+const showPwd = ref(false)
 
 const form = reactive({ phone: '', password: '', name: '', firm_name: '' })
 
