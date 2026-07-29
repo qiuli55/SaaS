@@ -104,6 +104,11 @@ const routes = [
     component: () => import('../views/TeamDetailView.vue'),
   },
   {
+    path: '/admin/invite',
+    name: 'AdminInvite',
+    component: () => import('../views/AdminInviteView.vue'),
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/ProfileView.vue'),

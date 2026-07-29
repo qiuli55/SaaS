@@ -9,6 +9,7 @@ class UserRegister(BaseModel):
     phone: str = Field(..., min_length=11, max_length=11, pattern=r"^1[3-9]\d{9}$")
     password: str = Field(..., min_length=6, max_length=32)
     code: str = Field(..., min_length=6, max_length=6)
+    invite_code: str = Field(..., min_length=8, max_length=12)
     name: str = Field(..., min_length=1, max_length=50)
     firm_name: str = Field(..., min_length=1, max_length=200)
 
@@ -232,3 +233,32 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserInfo
+
+
+# ========== 邀请码 ==========
+class InviteCodeBatch(BaseModel):
+    count: int = Field(default=5, ge=1, le=50)
+
+
+class InviteCodeInfo(BaseModel):
+    id: int
+    code: str
+    is_used: bool
+    created_at: datetime
+    used_at: Optional[datetime] = None
+    used_by: Optional[int] = None
+    used_by_phone: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ========== AI用量 ==========
+class UsageInfo(BaseModel):
+    date: str
+    chat: int = 0
+    contract: int = 0
+    case_analysis: int = 0
+    document: int = 0
+    total: int = 0
+    daily_limit: int = 50

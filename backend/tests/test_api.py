@@ -2,18 +2,44 @@
 import pytest
 import io
 
+_REG = {"code": "123456", "firm_name": "TestFirm"}
+_INV = None  # 自动生成唯一邀请码
+
+
+def _seed_invite(api, code):
+    """为当前测试预置一条邀请码。"""
+    from conftest import TestSessionLocal
+    db = TestSessionLocal()
+    try:
+        from sqlalchemy import text
+        db.execute(text("INSERT OR IGNORE INTO invite_codes (code, created_by) VALUES (:c, 0)"), {"c": code})
+        db.commit()
+    except Exception as e:
+        print(f"[seed_invite] {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+_inv_counter = 9000
+def _fresh_invite():
+    global _inv_counter
+    _inv_counter += 1
+    return f"INV{_inv_counter:06d}"
+
 
 class TestHealth:
     def test_app_running(self, api):
-        r = api.get("/api/user/info")  # 不需要登录也能测 401
-        assert r.status_code == 401  # 证明服务器在运行
+        r = api.get("/api/user/info")
+        assert r.status_code == 401
 
 
 class TestAuth:
     def test_register_login(self, api):
         phone = "13800000001"
-        r = api.post("/api/user/register", json={"phone": phone, "password": "Test1234", "name": "TestLawyer"})
-        assert r.status_code == 200
+        inv = _fresh_invite(); _seed_invite(api, inv)
+        r = api.post("/api/user/register", json={"phone": phone, "password": "Test1234", "name": "TL", "invite_code": inv, **_REG})
+        assert r.status_code == 200, f"failed: {r.json()}"
         assert "access_token" in r.json()
 
         r2 = api.post("/api/user/login", json={"phone": phone, "password": "Test1234"})
@@ -21,12 +47,15 @@ class TestAuth:
         assert "access_token" in r2.json()
 
     def test_duplicate_phone(self, api):
-        api.post("/api/user/register", json={"phone": "13900000001", "password": "Test1234"})
-        r = api.post("/api/user/register", json={"phone": "13900000001", "password": "OtherPass1"})
+        inv1 = _fresh_invite(); _seed_invite(api, inv1)
+        api.post("/api/user/register", json={"phone": "13900000001", "password": "Test1234", "name": "X", "invite_code": inv1, **_REG})
+        inv2 = _fresh_invite(); _seed_invite(api, inv2)
+        r = api.post("/api/user/register", json={"phone": "13900000001", "password": "OtherP1", "name": "Z", "invite_code": inv2, **_REG})
         assert r.status_code == 400
 
     def test_wrong_password(self, api):
-        api.post("/api/user/register", json={"phone": "13900000002", "password": "RightPass1"})
+        inv = _fresh_invite(); _seed_invite(api, inv)
+        api.post("/api/user/register", json={"phone": "13900000002", "password": "RightPass1", "name": "X", "invite_code": inv, **_REG})
         r = api.post("/api/user/login", json={"phone": "13900000002", "password": "WrongPass1"})
         assert r.status_code == 401
 
@@ -162,9 +191,9 @@ class TestPasswordChange:
         assert r.status_code == 400
 
     def test_login_with_new_password(self, api):
-        # 自包含：注册→改密→新密码登录
         phone = "13800000050"
-        api.post("/api/user/register", json={"phone": phone, "password": "Test1234", "name": "PwdTest"})
+        inv = _fresh_invite(); _seed_invite(api, inv)
+        api.post("/api/user/register", json={"phone": phone, "password": "Test1234", "name": "PwdTest", "invite_code": inv, **_REG})
         token = api.post("/api/user/login", json={"phone": phone, "password": "Test1234"}).json()["access_token"]
         h = {"Authorization": f"Bearer {token}"}
         api.put("/api/user/password", json={"old_password": "Test1234", "new_password": "Changed99"}, headers=h)
@@ -264,3 +293,18 @@ class TestScheduleIsolation:
         auth2 = fresh_auth(api)
         r = api.get("/api/schedules?month=2026-07", headers=auth2)
         assert len(r.json()["data"]) == 0
+
+
+class TestDocuments:
+    def test_history_empty(self, api, auth):
+        r = api.get("/api/documents/history", headers=auth)
+        assert r.status_code == 200
+        assert "items" in r.json()["data"]
+
+    def test_doc_not_found(self, api, auth):
+        r = api.get("/api/documents/99999", headers=auth)
+        assert r.status_code == 404
+
+    def test_delete_nonexistent(self, api, auth):
+        r = api.delete("/api/documents/99999", headers=auth)
+        assert r.status_code == 404

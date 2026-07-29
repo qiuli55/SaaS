@@ -11,6 +11,7 @@
         <p class="login-form-subtitle">注册后即可开始使用</p>
         <form @submit.prevent="handleRegister">
           <div class="form-group"><label class="form-label">手机号 <span style="color:var(--error)">*</span></label><input v-model="form.phone" type="text" maxlength="11" placeholder="请输入手机号" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">邀请码 <span style="color:var(--error)">*</span></label><input v-model="form.invite_code" type="text" placeholder="12位邀请码" class="form-input" maxlength="12" style="text-transform:uppercase" required /></div>
           <div class="form-group"><label class="form-label">密码 <span style="color:var(--error)">*</span></label>
             <div style="position:relative">
               <input v-model="form.password" :type="showPwd ? 'text' : 'password'" placeholder="至少6位" class="form-input" required style="padding-right:40px" />
@@ -26,7 +27,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">验证码 <span style="color:#f00;font-size:11px">v2</span></label>
+            <label class="form-label">验证码 <span style="color:var(--error)">*</span></label>
             <div class="sms-wrap">
               <input v-model="form.code" type="text" placeholder="6位数字验证码" class="form-input" style="flex:1" maxlength="6" />
               <button type="button" class="btn btn-outline btn-sm" @click="sendCode" :disabled="smsCountdown>0" style="white-space:nowrap">
@@ -48,14 +49,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'; import { useRouter } from 'vue-router'; import api from '../api'
 const router = useRouter(); const loading = ref(false); const error = ref(''); const showPwd = ref(false)
-const form = reactive({ phone:'',password:'',code:'',name:'',firm_name:'' })
+const form = reactive({ phone:'',password:'',code:'',invite_code:'',name:'',firm_name:'' })
 const smsCountdown = ref(0)
 
 async function sendCode() {
   if (!/^1[3-9]\d{9}$/.test(form.phone)) { error.value = '请输入正确的手机号'; return }
   try {
     const r = await api.post('/sms/send', { phone: form.phone })
-    form.code = r.data.code  // 开发期自动填充；正式 SMS 接通后去掉这行
+    error.value = ''
     smsCountdown.value = 60
     const timer = setInterval(() => {
       smsCountdown.value--
@@ -68,6 +69,7 @@ async function handleRegister() {
   error.value = ''
   if (!/^1[3-9]\d{9}$/.test(form.phone)) { error.value = '请输入正确的手机号'; return }
   if (!form.code || form.code.length !== 6) { error.value = '请输入6位验证码'; return }
+  if (!form.invite_code || form.invite_code.length < 8) { error.value = '请输入有效的邀请码'; return }
   if (form.password.length < 6) { error.value = '密码至少6位'; return }
   if (!form.name.trim()) { error.value = '请输入姓名'; return }
   if (!form.firm_name.trim()) { error.value = '请输入律所名称'; return }
