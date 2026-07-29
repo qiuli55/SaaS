@@ -99,6 +99,31 @@
         <router-view />
       </div>
     </div>
+
+    <!-- 移动端底部导航 -->
+    <nav class="bottom-nav">
+      <router-link to="/">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="2" width="16" height="14" rx="1"/><path d="M5 2v14M1 7h16"/></svg>
+        工作台
+      </router-link>
+      <router-link to="/cases">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 2h12a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h6M6 9h6M6 12h4"/></svg>
+        案件
+      </router-link>
+      <router-link to="/documents">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 1h10l3 3v12a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1z"/><path d="M14 1v3h3"/></svg>
+        文书
+      </router-link>
+      <router-link to="/clients">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="5" r="3"/><path d="M1 16v-1a4 4 0 014-4h4a4 4 0 014 4v1"/><path d="M13 8h3v8M13 12h2"/></svg>
+        客户
+      </router-link>
+      <router-link to="/chat">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2l6 2v5c0 4-3 6-6 8-3-2-6-4-6-8V4l6-2z"/><path d="M6.5 9l2 2 3.5-4"/></svg>
+        AI助手
+      </router-link>
+    </nav>
+
     <FloatingChat />
   </div>
 </template>

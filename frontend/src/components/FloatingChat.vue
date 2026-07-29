@@ -81,10 +81,20 @@ function closeChat() { open.value = false }
 function minimizeChat() { open.value = false }
 function openChat() {
   open.value = true
-  // 默认位置：右下角
-  panelPos.x = window.innerWidth - 420
-  panelPos.y = window.innerHeight - 520
-  updateStyle()
+  if (window.innerWidth <= 768) {
+    // 移动端直接全屏
+    panelStyle.value = {
+      position: 'fixed',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+      zIndex: 9999,
+    }
+  } else {
+    panelPos.x = window.innerWidth - 420
+    panelPos.y = window.innerHeight - 520
+    updateStyle()
+  }
   nextTick(() => scrollToBottom())
 }
 
@@ -244,4 +254,28 @@ function onScroll() {}
 .float-send:disabled { opacity: .4; cursor: not-allowed; }
 
 .float-drag-cover { position: fixed; inset: 0; z-index: 99999; }
+
+/* 移动端：全屏面板 + 按钮适配 */
+@media (max-width: 768px) {
+  .float-btn {
+    bottom: 80px; right: 16px;
+    width: 48px; height: 48px;
+  }
+  .float-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    left: 0 !important;
+    top: 0 !important;
+    z-index: 9999 !important;
+  }
+  .float-bar { cursor: default; /* 移动端禁止拖拽 */ }
+  .float-msgs { padding: 12px; }
+  .float-input { padding: 8px 10px; }
+  .float-textarea { font-size: 16px; }
+  .float-hint { padding: 12px 16px; font-size: 14px; }
+  .float-bubble { font-size: 14px; }
+}
 </style>

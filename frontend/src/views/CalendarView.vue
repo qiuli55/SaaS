@@ -13,7 +13,7 @@
       <button @click="goToday" class="btn btn-outline btn-sm" style="margin-left:12px">今天</button>
     </div>
 
-    <!-- 日历网格 -->
+    <!-- 日历网格（桌面端） -->
     <div class="calendar-grid">
       <div class="calendar-header" v-for="d in ['一','二','三','四','五','六','日']" :key="d">{{ d }}</div>
       <div v-for="(day, i) in calendarDays" :key="i"
@@ -26,6 +26,22 @@
           {{ ev.notes || ev.event_type }}
         </div>
         <div v-if="day.events.length > 3" style="font-size:10px;color:var(--text-muted);padding:1px 6px">+{{ day.events.length-3 }}更多</div>
+      </div>
+    </div>
+
+    <!-- 移动端：日程列表视图 -->
+    <div class="calendar-mobile-list">
+      <div v-for="day in mobileDays" :key="day.date" class="cal-day-card" @click="selectDate(day.date)">
+        <div class="cal-day-header">
+          <span>{{ day.weekday }}</span>
+          <span class="cal-day-num" :class="{ today: day.isToday }">{{ day.day }}</span>
+        </div>
+        <div v-if="!day.events.length" style="font-size:11px;color:var(--text-muted);padding:4px 0">无日程</div>
+        <div v-for="ev in day.events" :key="ev.id"
+          @click.stop="editEvent(ev)"
+          class="calendar-event" :class="eventClass(ev.event_type)">
+          {{ ev.notes || ev.event_type }}
+        </div>
       </div>
     </div>
 
@@ -129,6 +145,18 @@ const calendarDays = computed(() => {
 
 function eventsForDate(d) { return events.value.filter(e => e.event_date?.slice(0,10)===d) }
 const selectedEvents = computed(() => eventsForDate(selectedDate.value))
+
+const weekdays = ['一','二','三','四','五','六','日']
+const mobileDays = computed(() => {
+  const today = new Date().toISOString().slice(0,10)
+  return calendarDays.value
+    .filter(d => d.isCurrentMonth)
+    .map(d => ({
+      ...d,
+      weekday: weekdays[new Date(d.date).getDay() === 0 ? 6 : new Date(d.date).getDay() - 1],
+      isToday: d.date === today,
+    }))
+})
 
 function prevMonth() { if(currentMonth.value===1){currentMonth.value=12;currentYear.value--}else{currentMonth.value--}; fetchEvents(); selectedDate.value='' }
 function nextMonth() { if(currentMonth.value===12){currentMonth.value=1;currentYear.value++}else{currentMonth.value++}; fetchEvents(); selectedDate.value='' }
