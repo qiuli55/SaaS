@@ -178,3 +178,12 @@ class CaseDeadline(Base):
 
     case = relationship("Case")
     user = relationship("User")
+
+
+class LawFirm(Base):
+    """律师事务所名录"""
+    __tablename__ = "law_firms"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), index=True)
+    city = Column(String(50))
+    created_at = Column(DateTime, default=func.now())

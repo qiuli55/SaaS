@@ -26,7 +26,15 @@
             </div>
           </div>
           <div class="form-group"><label class="form-label">姓名</label><input v-model="form.name" type="text" placeholder="您的真实姓名" class="form-input" /></div>
-          <div class="form-group"><label class="form-label">律所名称</label><input v-model="form.firm_name" type="text" placeholder="所在律所" class="form-input" /></div>
+          <div class="form-group">
+            <label class="form-label">律所名称</label>
+            <div class="autocomplete-wrap">
+              <input v-model="form.firm_name" type="text" placeholder="输入律所名称搜索..." class="form-input" @input="searchFirms" @focus="searchFirms" @blur="blurFirms" />
+              <div v-if="firmSuggestions.length" class="autocomplete-drop">
+                <div v-for="f in firmSuggestions" :key="f.id" class="autocomplete-item" @mousedown.prevent="selectFirm(f.name)">{{ f.name }}<span style="color:var(--text-tertiary);font-size:11px;margin-left:auto">{{ f.city }}</span></div>
+              </div>
+            </div>
+          </div>
           <div v-if="error" style="padding:10px;border-radius:6px;background:#fef2f2;color:var(--error);font-size:13px;margin-bottom:16px">{{ error }}</div>
           <button type="submit" class="btn btn-accent btn-lg" style="width:100%" :disabled="loading">{{ loading?'注册中...':'注册' }}</button>
         </form>
@@ -40,9 +48,38 @@
 import { ref, reactive } from 'vue'; import { useRouter } from 'vue-router'; import api from '../api'
 const router = useRouter(); const loading = ref(false); const error = ref(''); const showPwd = ref(false)
 const form = reactive({ phone:'',password:'',name:'',firm_name:'' })
+const firmSuggestions = ref([]); let firmTimer = null
+
+async function searchFirms() {
+  clearTimeout(firmTimer)
+  const q = form.firm_name.trim()
+  if (!q || q.length < 2) { firmSuggestions.value = []; return }
+  firmTimer = setTimeout(async () => {
+    try { const r = await api.get('/firms/search', { params: { q, limit: 8 } }); firmSuggestions.value = r.data }
+    catch { firmSuggestions.value = [] }
+  }, 200)
+}
+function selectFirm(name) { form.firm_name = name; firmSuggestions.value = [] }
+function blurFirms() { setTimeout(() => firmSuggestions.value = [], 150) }
+
 async function handleRegister() {
   error.value = ''; if(!/^1[3-9]\d{9}$/.test(form.phone)){error.value='请输入正确的手机号';return}; if(form.password.length<6){error.value='密码至少6位';return}
   loading.value=true; try { const r = await api.post('/user/register',form); localStorage.setItem('token',r.data.access_token); localStorage.setItem('user',JSON.stringify(r.data.user)); router.push('/') }
   catch(e) { error.value = e.response?.data?.detail||'注册失败' } finally { loading.value = false }
 }
 </script>
+
+<style scoped>
+.autocomplete-wrap { position: relative }
+.autocomplete-drop {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+  background: var(--color-background-primary); border: 1px solid var(--color-border-primary);
+  border-radius: 8px; max-height: 240px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,.1)
+}
+.autocomplete-item {
+  padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center;
+  color: var(--text-primary); border-bottom: 1px solid var(--color-border-tertiary)
+}
+.autocomplete-item:last-child { border-bottom: none }
+.autocomplete-item:hover { background: var(--color-background-secondary) }
+</style>
