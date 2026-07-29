@@ -64,6 +64,19 @@ FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
 if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
 
+    @app.get("/{path:path}")
+    async def serve_spa(path: str):
+        # 从路径中提取第一段，判断是否为 API 路径
+        first = path.split("/")[0] if "/" in path else path
+        if first in ("api", "docs", "openapi.json", "favicon.ico"):
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        
+        file_path = FRONTEND_DIST / path
+        if file_path.is_file() and path:
+            return FileResponse(file_path)
+        return FileResponse(FRONTEND_DIST / "index.html")
+
 
 @app.get("/")
 def root():
