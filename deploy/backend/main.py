@@ -11,7 +11,6 @@ try:
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).parent / ".env")
 except ImportError:
-    # 兜底：手动解析 .env（python-dotenv 未安装时）
     env_path = Path(__file__).parent / ".env"
     if env_path.exists():
         with open(env_path, "r", encoding="utf-8") as f:
@@ -31,7 +30,6 @@ from routers import user, cases, documents, files, clients, schedules, chat
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 启动时创建所有表
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -43,19 +41,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — 智能匹配：localhost、局域网 IP、所有 cpolar 子域名
-_CORS_REGEX = os.getenv(
-    "CORS_REGEX",
-    r"https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?|"
-    r"https?://.+\.cpolar\.(top|cn)(:\d+)?"
-)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=_CORS_REGEX,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 注册路由
@@ -73,16 +64,6 @@ FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
 if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
 
-    @app.get("/{full_path:path}")
-    def serve_spa(full_path: str):
-        # API 请求已经走 router，这里只处理前端路由
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
-            return {"error": "not found"}
-        file_path = FRONTEND_DIST / full_path
-        if file_path.is_file():
-            return FileResponse(file_path)
-        return FileResponse(FRONTEND_DIST / "index.html")
-
 
 @app.get("/")
 def root():
@@ -93,7 +74,6 @@ def root():
 
 @app.get("/api/health")
 def health():
-    # 检查数据库连接
     db_ok = False
     try:
         db = SessionLocal()
