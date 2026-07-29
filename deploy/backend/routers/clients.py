@@ -93,6 +93,85 @@ def create_client(
     }
 
 
+@router.get("/export")
+def export_clients(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """导出客户为 Excel"""
+    clients = db.query(Client).filter(Client.user_id == current_user.id).order_by(Client.created_at.desc()).all()
+
+    from openpyxl import Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "客户通讯录"
+
+    headers = ["姓名", "手机号", "微信", "身份证号", "公司", "标签", "备注", "创建时间"]
+    ws.append(headers)
+
+    for c in clients:
+        tags = c.tags or ""
+        try:
+            parsed = json.loads(tags)
+            tags = ", ".join(parsed) if isinstance(parsed, list) else str(parsed)
+        except:
+            pass
+        created = ""
+        try:
+            if c.created_at:
+                created = c.created_at.strftime("%Y-%m-%d %H:%M")
+        except:
+            pass
+        ws.append([c.name or "", c.phone or "", c.wechat or "", c.id_card or "",
+                   c.company or "", tags, c.remark or "", created])
+
+    for col, w in zip("ABCDEFGH", [12, 14, 14, 20, 20, 20, 30, 18]):
+        ws.column_dimensions[col].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             headers={"Content-Disposition": "attachment; filename=clients.xlsx"})
+
+
+@router.post("/import")
+async def import_clients(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """从 Excel 批量导入客户"""
+    from openpyxl import load_workbook
+    contents = await file.read()
+    wb = load_workbook(io.BytesIO(contents))
+    ws = wb.active
+    rows = list(ws.iter_rows(min_row=2, values_only=True))
+    count = 0
+    for row in rows:
+        if not row or not row[0]:
+            continue
+        name = str(row[0]).strip() if row[0] else None
+        if not name:
+            continue
+        phone = str(row[1]).strip() if len(row) > 1 and row[1] else None
+        wechat = str(row[2]).strip() if len(row) > 2 and row[2] else None
+        id_card = str(row[3]).strip() if len(row) > 3 and row[3] else None
+        company = str(row[4]).strip() if len(row) > 4 and row[4] else None
+        tags = str(row[5]).strip() if len(row) > 5 and row[5] else None
+        remark = str(row[6]).strip() if len(row) > 6 and row[6] else None
+
+        client = Client(
+            user_id=current_user.id, name=name, phone=phone, wechat=wechat,
+            id_card=id_card, company=company, tags=tags, remark=remark
+        )
+        db.add(client)
+        count += 1
+    db.commit()
+    return {"message": f"成功导入 {count} 位客户", "count": count}
+
+
 @router.get("/{client_id}")
 def get_client(
     client_id: int,
@@ -187,97 +266,3 @@ def delete_client(
         raise HTTPException(status_code=404, detail="客户不存在")
     db.delete(client)
     db.commit()
-    return {"code": 0, "message": "已删除"}
-
-
-@router.get("/export")
-def export_clients(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """导出客户为 Excel"""
-    clients = db.query(Client).filter(Client.user_id == current_user.id).order_by(Client.created_at.desc()).all()
-
-    from openpyxl import Workbook
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "客户通讯录"
-
-    headers = ["姓名", "手机号", "微信", "身份证号", "公司", "标签", "备注", "创建时间"]
-    ws.append(headers)
-
-    for c in clients:
-        tags = c.tags or ""
-        try:
-            parsed = json.loads(tags)
-            tags = ", ".join(parsed) if isinstance(parsed, list) else str(parsed)
-        except:
-            pass
-        created = ""
-        try:
-            if c.created_at:
-                created = c.created_at.strftime("%Y-%m-%d %H:%M")
-        except:
-            pass
-        ws.append([c.name or "", c.phone or "", c.wechat or "", c.id_card or "",
-                   c.company or "", tags, c.remark or "", created])
-
-    # 设置列宽
-    for col, w in zip("ABCDEFGH", [12, 14, 14, 20, 20, 20, 30, 18]):
-        ws.column_dimensions[col].width = w
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-
-    return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                             headers={"Content-Disposition": "attachment; filename=clients.xlsx"})
-
-
-@router.post("/import")
-async def import_clients(
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """从 Excel 导入客户"""
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        raise HTTPException(status_code=400, detail="请上传 .xlsx 或 .xls 文件")
-
-    from openpyxl import load_workbook
-
-    contents = await file.read()
-    wb = load_workbook(io.BytesIO(contents))
-    ws = wb.active
-
-    created = 0
-    skipped = 0
-
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if not row[0]: continue
-        name, phone, wechat, id_card, company, tags_str, remark = (row + ("",)*7)[:7]
-
-        # 检查重复（按手机号）
-        if phone and db.query(Client).filter(Client.user_id == current_user.id, Client.phone == str(phone)).first():
-            skipped += 1
-            continue
-
-        # 处理标签
-        tags_list = [t.strip() for t in str(tags_str).split(",") if t.strip()] if tags_str else []
-
-        client = Client(
-            user_id=current_user.id,
-            name=str(name or "").strip(),
-            phone=str(phone or "").strip(),
-            wechat=str(wechat or "").strip(),
-            id_card=str(id_card or "").strip(),
-            company=str(company or "").strip(),
-            tags=json.dumps(tags_list, ensure_ascii=False) if tags_list else "",
-            remark=str(remark or "").strip(),
-        )
-        db.add(client)
-        created += 1
-
-    db.commit()
-
-    return {"code": 0, "message": f"导入完成", "data": {"created": created, "skipped": skipped}}
