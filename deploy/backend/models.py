@@ -37,6 +37,7 @@ class Case(Base):
     court_name = Column(String(100), default="")  # 管辖法院
     subject_amount = Column(DECIMAL(12, 2), default=0)
     status = Column(String(20), default="进行中")
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     commission_date = Column(Date, nullable=True)
     description = Column(Text, default="")
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
@@ -48,6 +49,7 @@ class Case(Base):
     client = relationship("Client", back_populates="cases")
     documents = relationship("Document", back_populates="case", cascade="all, delete-orphan")
     files = relationship("CaseFile", back_populates="case", cascade="all, delete-orphan")
+    team = relationship("Team")
 
 
 class Document(Base):
@@ -135,6 +137,31 @@ class VisitLog(Base):
     path = Column(String(500))
     method = Column(String(10))
     created_at = Column(DateTime, default=func.now())
+
+
+class Team(Base):
+    """协作团队"""
+    __tablename__ = "teams"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))
+    description = Column(String(500))
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=func.now())
+
+    owner = relationship("User")
+
+
+class TeamMember(Base):
+    """团队成员"""
+    __tablename__ = "team_members"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    role = Column(String(20), default="member")
+    joined_at = Column(DateTime, default=func.now())
+
+    team = relationship("Team")
+    user = relationship("User")
 
 
 class CaseDeadline(Base):

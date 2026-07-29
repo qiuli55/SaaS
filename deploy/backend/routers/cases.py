@@ -5,7 +5,7 @@ from typing import Optional
 import uuid
 from datetime import datetime, timedelta
 from database import get_db
-from models import Case, Document, CaseFile, User, CaseDeadline
+from models import Case, Document, CaseFile, User, CaseDeadline, TeamMember
 from schemas import CaseCreate, CaseUpdate, CaseInfo, CaseListResponse
 from auth import get_current_user
 
@@ -152,11 +152,20 @@ def get_case(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    case = db.query(Case).filter(
-        Case.id == case_id, Case.user_id == current_user.id
-    ).first()
+    case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="案件不存在")
+    # 允许案件创建者或团队成员查看
+    if case.user_id != current_user.id:
+        if case.team_id:
+            member = db.query(TeamMember).filter(
+                TeamMember.team_id == case.team_id,
+                TeamMember.user_id == current_user.id
+            ).first()
+            if not member:
+                raise HTTPException(status_code=403, detail="无权查看此案件")
+        else:
+            raise HTTPException(status_code=403, detail="无权查看此案件")
     return make_case_info(case)
 
 

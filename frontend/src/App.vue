@@ -63,6 +63,10 @@
         <router-link to="/contract" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h10a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h6M6 9h6M6 12h4"/></svg>
           合同审查
+        <router-link to="/teams" class="sidebar-link" @click="sidebarOpen=false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="6" r="3"/><circle cx="13" cy="6" r="2"/><path d="M2 14v-1a4 4 0 014-4h2a4 4 0 014 4v1"/><path d="M11 14v-1a2 2 0 012-2"/></svg>
+          协作团队
+        </router-link>
         </router-link>
       </nav>
 

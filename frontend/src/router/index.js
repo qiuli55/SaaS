@@ -94,6 +94,16 @@ const routes = [
     component: () => import('../views/ContractReviewView.vue'),
   },
   {
+    path: '/teams',
+    name: 'TeamList',
+    component: () => import('../views/TeamListView.vue'),
+  },
+  {
+    path: '/teams/:id',
+    name: 'TeamDetail',
+    component: () => import('../views/TeamDetailView.vue'),
+  },
+  {
     path: '/privacy',
     name: 'Privacy',
     component: () => import('../views/PrivacyView.vue'),
