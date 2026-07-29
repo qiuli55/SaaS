@@ -28,6 +28,23 @@
       <div class="tabs-nav">
         <button @click="activeTab='documents'" class="tab-item" :class="{ active: activeTab==='documents' }">文书 ({{ documents.length }})</button>
         <button @click="activeTab='files'" class="tab-item" :class="{ active: activeTab==='files' }">文件 ({{ files.length }})</button>
+        <button @click="activeTab='analysis'" class="tab-item" :class="{ active: activeTab==='analysis' }">AI 分析</button>
+      </div>
+
+      <!-- AI 分析面板 -->
+      <div v-if="activeTab==='analysis'" class="analysis-panel">
+        <div v-if="!analysisResult && !analyzing" class="analysis-intro">
+          <p>让 AI 读取已上传的案件材料，自动生成：时间线梳理、主体关系分析、事实概述、争议焦点总结。</p>
+          <button class="btn btn-accent" @click="runAnalysis" :disabled="!files.length">
+            {{ files.length ? '开始智能分析' : '请先上传案件文件' }}
+          </button>
+        </div>
+        <div v-if="analyzing" class="analysis-loading">
+          <div class="spinner"><div></div></div>
+          <span>AI 正在阅读案件材料并分析...</span>
+        </div>
+        <div v-if="analysisResult" class="analysis-result markdown-body" v-html="renderedAnalysis"></div>
+        <button v-if="analysisResult" class="btn btn-outline btn-sm" style="margin-top:12px" @click="runAnalysis">重新分析</button>
       </div>
 
       <div v-if="activeTab==='documents'">
@@ -73,10 +90,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api, { authDownload } from '../api'
+import { ref, onMounted, computed } from 'vue'; import { useRoute, useRouter } from 'vue-router'; import api, { authDownload } from '../api'
 const route = useRoute(); const router = useRouter(); const caseId = route.params.id
 const caseInfo = ref({}); const documents = ref([]); const files = ref([]); const loading = ref(true); const activeTab = ref('documents'); const error = ref('')
 const selectedFiles = ref([]); const uploading = ref(false)
+const analyzing = ref(false); const analysisResult = ref('')
 
 onMounted(async () => {
   try { const [a,b,c] = await Promise.all([api.get(`/cases/${caseId}`), api.get(`/cases/${caseId}/documents`), api.get(`/cases/${caseId}/files`)])
@@ -101,6 +119,40 @@ function regenerate(doc) { router.push(`/cases/${caseId}/documents/new?doc_type=
 function fileIcon(n) { const e=n?.split('.').pop()?.toLowerCase(); const m={pdf:'📄',doc:'📄',docx:'📄',xls:'📊',xlsx:'📊',png:'🖼️',jpg:'🖼️',jpeg:'🖼️'}; return m[e]||'📎' }
 function fileTypeLabel(t) { const m={evidence:'证据',judgment:'判决书',entrustment:'委托书',other:'其他'}; return m[t]||'其他' }
 function formatDate(d) { return d?.slice(0,10)||'' }
+
+const renderedAnalysis = computed(() => {
+  return analysisResult.value
+    .replace(/### (.+)/g, '<h3>$1</h3>')
+    .replace(/## (.+)/g, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/^- (.+)/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, m => '<ul>' + m + '</ul>')
+    .replace(/\n/g, '<br/>')
+})
+
+async function runAnalysis() {
+  analyzing.value = true; analysisResult.value = ''
+  try {
+    const res = await api.post(`/contract/cases/${caseId}/analyze`)
+    analysisResult.value = res.data.result
+  } catch (e) {
+    analysisResult.value = '分析失败：' + (e.response?.data?.detail || e.message)
+  } finally { analyzing.value = false }
+}
 function formatMoney(v) { return Number(v||0).toLocaleString('zh-CN') }
 function formatSize(b) { if(!b) return '0B'; const u=['B','KB','MB','GB']; let i=0,s=b; while(s>=1024&&i<u.length-1){s/=1024;i++}; return s.toFixed(1)+' '+u[i] }
 </script>
+
+<style scoped>
+.analysis-panel { padding: 20px; background: var(--color-background-secondary); border-radius: 12px; border: 1px solid var(--color-border-tertiary) }
+.analysis-intro p { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.7 }
+.analysis-loading { display: flex; align-items: center; gap: 12px; padding: 48px; justify-content: center; color: var(--text-secondary); font-size: 14px }
+.analysis-result :deep(h2) { font-size: 16px; margin: 16px 0 8px; color: var(--text-primary) }
+.analysis-result :deep(h3) { font-size: 14px; margin: 12px 0 6px; color: var(--text-primary) }
+.analysis-result :deep(li) { font-size: 13px; color: var(--text-secondary); margin: 4px 0; padding-left: 4px }
+.analysis-result :deep(b) { color: var(--text-primary) }
+.analysis-result :deep(ul) { padding-left: 20px }
+.spinner { display: inline-flex }
+.spinner div { width: 20px; height: 20px; border: 2px solid var(--color-border-secondary); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite }
+@keyframes spin { to { transform: rotate(360deg) } }
+</style>

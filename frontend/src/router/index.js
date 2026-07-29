@@ -89,6 +89,11 @@ const routes = [
     component: () => import('../views/AIChatView.vue'),
   },
   {
+    path: '/contract',
+    name: 'ContractReview',
+    component: () => import('../views/ContractReviewView.vue'),
+  },
+  {
     path: '/privacy',
     name: 'Privacy',
     component: () => import('../views/PrivacyView.vue'),

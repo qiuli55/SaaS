@@ -60,6 +60,10 @@
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l6 2v5c0 4-3 6-6 8-3-2-6-4-6-8V4l6-2z"/><path d="M6.5 9l2 2 3.5-4"/></svg>
           AI 法律助手
         </router-link>
+        <router-link to="/contract" class="sidebar-link" @click="sidebarOpen=false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h10a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h6M6 9h6M6 12h4"/></svg>
+          合同审查
+        </router-link>
       </nav>
 
       <div class="sidebar-footer">
