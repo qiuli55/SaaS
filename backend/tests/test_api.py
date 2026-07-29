@@ -86,6 +86,19 @@ class TestCases:
         r = api.get("/api/cases", headers=auth2)
         assert r.json()["total"] == 0
 
+    def test_get_by_id(self, api, auth):
+        created = api.post("/api/cases", json={"case_type": "TestGet", "plaintiff": "P", "defendant": "D"}, headers=auth)
+        cid = created.json()["id"]
+        r = api.get(f"/api/cases/{cid}", headers=auth)
+        assert r.status_code == 200
+        assert r.json()["case_type"] == "TestGet"
+
+    def test_filter_by_status(self, api, auth):
+        api.post("/api/cases", json={"case_type": "A", "status": "已结案"}, headers=auth)
+        api.post("/api/cases", json={"case_type": "B", "status": "进行中"}, headers=auth)
+        r = api.get("/api/cases", params={"status": "进行中"}, headers=auth)
+        assert r.json()["total"] == 1
+
 
 class TestSchedules:
     def test_create_and_list(self, api, auth):
@@ -225,4 +238,29 @@ class TestEdgeCases:
     def test_empty_schedules_month(self, api, auth):
         r = api.get("/api/schedules?month=2030-01", headers=auth)
         assert r.status_code == 200
+        assert len(r.json()["data"]) == 0
+
+
+class TestFileDownload:
+    def test_download_after_upload(self, api, auth):
+        # 上传一个文件
+        r = api.post("/api/cases", json={"case_type": "DownloadTest"}, headers=auth)
+        cid = r.json()["id"]
+        api.post(
+            f"/api/cases/{cid}/files",
+            files=[("files", ("note.txt", io.BytesIO(b"test content"), "text/plain"))],
+            headers=auth,
+        )
+        # 列出案件文件
+        r2 = api.get(f"/api/cases/{cid}", headers=auth)
+        assert r2.status_code == 200
+        assert r2.json()["file_count"] >= 1
+
+
+class TestScheduleIsolation:
+    def test_other_user_cant_see(self, api, auth):
+        api.post("/api/schedules", json={"event_type": "开庭", "event_date": "2026-07-01T08:00:00"}, headers=auth)
+        from conftest import fresh_auth
+        auth2 = fresh_auth(api)
+        r = api.get("/api/schedules?month=2026-07", headers=auth2)
         assert len(r.json()["data"]) == 0
