@@ -46,8 +46,8 @@
     <div v-if="showInvite" class="modal-overlay" @click.self="showInvite=false">
       <div class="modal">
         <h3 class="modal-title">邀请成员</h3>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">输入对方的注册手机号</p>
-        <input v-model="invitePhone" placeholder="手机号" class="input" />
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">输入对方的手机号或 8 位数字 ID</p>
+        <input v-model="invitePhone" placeholder="手机号 / 数字 ID" class="input" />
         <div v-if="inviteError" class="error-msg">{{ inviteError }}</div>
         <div class="modal-actions">
           <button @click="showInvite=false" class="btn btn-ghost btn-sm">取消</button>
@@ -75,8 +75,10 @@ onMounted(async () => {
 
 async function doInvite() {
   inviteError.value = ''
+  const q = invitePhone.value.trim()
+  const isPhone = /^1[3-9]\d{9}$/.test(q)
   try {
-    await api.post(`/teams/${teamId}/invite`, { phone: invitePhone.value })
+    await api.post(`/teams/${teamId}/invite`, isPhone ? { phone: q } : { user_code: q })
     showInvite.value = false; invitePhone.value = ''
     const r = await api.get(`/teams/${teamId}`); team.value = r.data
   } catch(e) { inviteError.value = e.response?.data?.detail || '邀请失败' }

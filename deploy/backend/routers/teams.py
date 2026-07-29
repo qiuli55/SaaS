@@ -16,7 +16,8 @@ class TeamCreate(BaseModel):
 
 
 class InviteReq(BaseModel):
-    phone: str  # 被邀请人手机号
+    phone: str = ""  # 手机号或数字ID
+    user_code: str = ""
 
 
 @router.post("")
@@ -78,9 +79,14 @@ def invite_member(team_id: int, req: InviteReq, db: Session = Depends(get_db), u
     t = db.query(Team).filter(Team.id == team_id).first()
     if not t:
         raise HTTPException(404, "团队不存在")
-    invitee = db.query(User).filter(User.phone == req.phone).first()
+    
+    if req.user_code:
+        invitee = db.query(User).filter(User.user_code == req.user_code).first()
+    else:
+        invitee = db.query(User).filter(User.phone == req.phone).first()
+    
     if not invitee:
-        raise HTTPException(404, "该手机号未注册，请先邀请对方注册")
+        raise HTTPException(404, "未找到该用户，请确认手机号或数字 ID 正确")
     existing = db.query(TeamMember).filter(
         TeamMember.team_id == team_id, TeamMember.user_id == invitee.id).first()
     if existing:
