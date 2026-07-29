@@ -3,10 +3,50 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
 import uuid
+from datetime import datetime, timedelta
 from database import get_db
-from models import Case, Document, CaseFile, User
+from models import Case, Document, CaseFile, User, CaseDeadline
 from schemas import CaseCreate, CaseUpdate, CaseInfo, CaseListResponse
 from auth import get_current_user
+
+
+def _auto_deadlines(case: Case, db: Session):
+    """据案件类型和收案日期自动生成审限"""
+    now = datetime.now()
+    base = case.commission_date or now
+
+    deadlines = []
+
+    # 答辩期：一般15天
+    deadlines.append({"type": "答辩期", "days": 15, "note": f"{case.defendant}提交答辩状截止"})
+
+    # 举证期限
+    if "简易" in (case.case_type or ""):
+        deadlines.append({"type": "举证期限", "days": 15, "note": "简易程序举证截止"})
+    elif "劳动" in (case.case_type or ""):
+        deadlines.append({"type": "举证期限", "days": 10, "note": "劳动争议举证截止"})
+    else:
+        deadlines.append({"type": "举证期限", "days": 30, "note": "普通程序举证截止"})
+
+    # 管辖权异议
+    deadlines.append({"type": "管辖权异议", "days": 15, "note": f"被告{case.defendant}提管辖权异议截止"})
+
+    # 审理期限
+    if "简易" in (case.case_type or ""):
+        deadlines.append({"type": "审理期限", "days": 90, "note": "简易程序审限3个月"})
+    else:
+        deadlines.append({"type": "审理期限", "days": 180, "note": "普通程序审限6个月"})
+
+    for d in deadlines:
+        dl = CaseDeadline(
+            case_id=case.id,
+            user_id=case.user_id,
+            deadline_type=d["type"],
+            deadline_date=base + timedelta(days=d["days"]),
+            notes=d["note"],
+        )
+        db.add(dl)
+    db.commit()
 
 router = APIRouter(prefix="/api/cases", tags=["案件"])
 
@@ -76,8 +116,8 @@ def create_case(
     current_user: User = Depends(get_current_user),
 ):
     # 使用时间戳+随机串生成唯一 case_no，避免竞态条件
-    from datetime import datetime as dt
-    ts = dt.now().strftime("%Y%m%d%H%M%S")
+    from datetime import datetime as _dt
+    ts = _dt.now().strftime("%Y%m%d%H%M%S")
     short_uid = uuid.uuid4().hex[:4]
     case_no = f"LA-{ts}-{short_uid}"
 
@@ -99,6 +139,10 @@ def create_case(
     db.add(case)
     db.commit()
     db.refresh(case)
+
+    # 自动生成默认审限
+    _auto_deadlines(case, db)
+
     return make_case_info(case)
 
 

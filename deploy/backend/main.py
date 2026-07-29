@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -23,9 +23,13 @@ except ImportError:
                     if key and key not in os.environ:
                         os.environ[key] = value
 
-from database import engine, Base, SessionLocal
+from database import engine, Base, SessionLocal, get_db
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 from routers import user, cases, documents, files, clients, schedules, chat
+from datetime import datetime
+from models import User
+from auth import get_current_user
 
 
 @asynccontextmanager
@@ -57,6 +61,63 @@ app.include_router(files.router)
 app.include_router(clients.router)
 app.include_router(schedules.router)
 app.include_router(chat.router)
+
+
+# 今日待办
+from models import CaseDeadline, Case, Schedule
+from sqlalchemy import and_
+
+@app.get("/api/today")
+def today_tasks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """今日待办：审限 + 日程"""
+    now = datetime.now()
+    today = now.date()
+
+    # 未完成的审限（按紧迫度排序）
+    deadlines = db.query(CaseDeadline).join(Case).filter(
+        CaseDeadline.user_id == current_user.id,
+        CaseDeadline.is_done == False,
+    ).all()
+
+    overdue = []
+    today_dl = []
+    upcoming = []
+    for d in deadlines:
+        days_left = (d.deadline_date.date() - today).days if d.deadline_date else 999
+        item = {
+            "id": d.id, "case_id": d.case_id, "case_name": d.case.plaintiff + " vs " + d.case.defendant if d.case else "未知案件",
+            "deadline_type": d.deadline_type, "deadline_date": str(d.deadline_date)[:10] if d.deadline_date else "",
+            "days_left": days_left, "notes": d.notes,
+        }
+        if days_left < 0:
+            overdue.append(item)
+        elif days_left == 0:
+            today_dl.append(item)
+        elif days_left <= 3:
+            upcoming.append(item)
+
+    # 今日日程
+    schedules = db.query(Schedule).filter(
+        Schedule.user_id == current_user.id,
+        func.date(Schedule.event_date) == today,
+    ).all()
+    today_schedules = [{"id": s.id, "event_type": s.event_type, "event_date": str(s.event_date)[:16], "notes": s.notes} for s in schedules]
+
+    # 进行中案件数
+    active_cases = db.query(Case).filter(Case.user_id == current_user.id, Case.status == "进行中").count()
+
+    return {
+        "overdue": overdue,
+        "today": today_dl,
+        "upcoming": upcoming,
+        "schedules": today_schedules,
+        "active_cases": active_cases,
+        "urgent_count": len(overdue) + len(today_dl),
+        "date": str(today),
+    }
 
 
 # 访问日志中间件

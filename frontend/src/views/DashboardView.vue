@@ -29,87 +29,97 @@
       </div>
     </div>
 
-    <!-- 分区一：数据概览 -->
-    <div class="zone-title"><span class="bar"></span><h2>数据概览</h2></div>
-    <div class="stats-row">
-      <div class="stat-box k1"><div class="l">案件总数</div><div class="v">{{ stats.totalCases }}</div><div class="d">本月新增 {{ stats.newThisMonth || 0 }} 件</div></div>
-      <div class="stat-box k2"><div class="l">进行中</div><div class="v">{{ stats.activeCases }}</div><div class="d">待处理案件</div></div>
-      <div class="stat-box k3"><div class="l">本月文书</div><div class="v">{{ stats.documentsGenerated }}</div><div class="d">累计生成份数</div></div>
-      <div class="stat-box k4"><div class="l">待办提醒</div><div class="v">{{ stats.pendingTodos }}</div><div class="d">未完成日程</div></div>
+    <!-- 今日状态条 -->
+    <div class="zone-title" style="margin-top:4px"><span class="bar"></span><h2>今日待办 · {{ today.date }}</h2></div>
+
+    <!-- 紧急提醒区 -->
+    <div v-if="today.overdue.length > 0" class="alert-zone">
+      <div class="alert-zone-header">
+        <span class="alert-dot"></span>
+        <span><b>{{ today.overdue.length }}</b> 项已逾期</span>
+      </div>
+      <div class="alert-list">
+        <router-link v-for="d in today.overdue" :key="'o'+d.id" :to="`/cases/${d.case_id}`" class="alert-item overdue">
+          <span class="alert-badge">逾期</span>
+          <span class="alert-label">{{ d.deadline_type }}：{{ d.notes }}</span>
+          <span class="alert-meta">{{ d.case_name }} · {{ d.deadline_date }}</span>
+        </router-link>
+      </div>
     </div>
 
-    <div class="dashboard-grid">
-      <!-- 左栏 -->
-      <div class="dashboard-stack">
-        <!-- 分区二：我的案件 -->
-        <div>
-          <div class="zone-title">
-            <span class="bar"></span><h2>最近案件</h2>
-            <router-link to="/cases" class="more">查看全部 ›</router-link>
-          </div>
-          <div class="card">
-            <div v-if="recentCases.length === 0" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
-              <div style="font-size:36px;margin-bottom:12px">📋</div>
-              <div style="font-size:14px">暂无案件，点击「新建案件」开始</div>
-            </div>
-            <div v-for="c in recentCases" :key="c.id">
-              <router-link :to="`/cases/${c.id}`" class="case-row">
-                <div class="case-ic">{{ (c.case_type || '案件').slice(0,2) }}</div>
-                <div class="case-main">
-                  <div class="t">{{ c.case_type || '未命名' }}</div>
-                  <div class="m" v-if="c.subject_amount">标的额 ¥{{ formatMoney(c.subject_amount) }} · 委托 {{ (c.created_at||'').slice(0,10) }}</div>
-                </div>
-                <span :class="statusBadgeClass(c.status)">{{ c.status || '未知' }}</span>
-                <span class="case-go">›</span>
-              </router-link>
-            </div>
-          </div>
-        </div>
-
-        <!-- 分区三：近期待办 -->
-        <div>
-          <div class="zone-title"><span class="bar"></span><h2>近期待办</h2></div>
-          <div class="card" style="padding:24px">
-            <div class="tl">
-              <div v-if="upcomingSchedules.length === 0" style="text-align:center;padding:24px;color:var(--text-muted);font-size:14px">
-                暂无待办事项
-              </div>
-              <div v-for="item in upcomingSchedules" :key="item.id" class="tl-item">
-                <div class="tl-time"><b>{{ item.days }}</b>{{ item.time }}</div>
-                <div class="tl-line"></div>
-                <div class="tl-body">
-                  <div class="tt">{{ item.title }}</div>
-                  <div class="td">{{ item.desc }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- 今日截止 -->
+    <div v-if="today.today.length > 0" class="deadline-zone">
+      <div class="zone-sub"><span class="dot today-dot"></span><b>今日截止</b></div>
+      <div class="deadline-cards">
+        <router-link v-for="d in today.today" :key="'t'+d.id" :to="`/cases/${d.case_id}`" class="deadline-card today-card">
+          <div class="dc-type">{{ d.deadline_type }}</div>
+          <div class="dc-text">{{ d.notes }}</div>
+          <div class="dc-case">{{ d.case_name }}</div>
+        </router-link>
       </div>
+    </div>
 
-      <!-- 右栏 -->
-      <div class="dashboard-stack">
-        <!-- 分区五：重点客户 -->
-        <div>
-          <div class="zone-title">
-            <span class="bar"></span><h2>重点客户</h2>
-            <router-link to="/clients" class="more">查看全部 ›</router-link>
-          </div>
-          <div class="card">
-            <div v-if="keyClients.length === 0" style="text-align:center;padding:48px 24px;color:var(--text-muted)">
-              <div style="font-size:14px">暂无客户数据</div>
-            </div>
-            <router-link v-for="c in keyClients" :key="c.id" :to="`/clients/${c.id}`" class="client-mini">
-              <div class="ci">{{ (c.name || '无')[0] }}</div>
-              <div class="cm">
-                <div class="t">{{ c.name }}</div>
-                <div class="m">{{ c.company || '个人' }} · {{ c.case_count || 0 }} 件关联案件</div>
-              </div>
-              <span class="badge" :class="c.case_count > 0 ? 'badge-success' : 'badge-neutral'">{{ c.case_count > 0 ? '活跃' : '常规' }}</span>
-            </router-link>
-          </div>
-        </div>
+    <!-- 近三天待办 -->
+    <div v-if="today.upcoming.length > 0" class="deadline-zone">
+      <div class="zone-sub"><span class="dot upcoming-dot"></span><b>近三日待处理</b></div>
+      <div class="deadline-cards">
+        <router-link v-for="d in today.upcoming" :key="'u'+d.id" :to="`/cases/${d.case_id}`" class="deadline-card upcoming-card">
+          <div class="dc-type">{{ d.deadline_type }}</div>
+          <div class="dc-text">{{ d.notes }}</div>
+          <div class="dc-meta">{{ d.case_name }} · {{ d.days_left }}天后</div>
+        </router-link>
       </div>
+    </div>
+
+    <!-- 今日日程 -->
+    <div class="zone-title" style="margin-top:20px"><span class="bar"></span><h2>今日日程</h2></div>
+    <div class="card" style="padding:16px">
+      <div v-if="today.schedules.length === 0" class="empty-hint">今日无日程</div>
+      <div v-for="s in today.schedules" :key="'s'+s.id" class="schedule-row">
+        <span class="sch-dot" :class="s.event_type.includes('开庭') ? 'sch-court' : 'sch-other'"></span>
+        <span class="sch-type">{{ s.event_type }}</span>
+        <span class="sch-time">{{ s.event_date ? s.event_date.slice(11,16) : '' }}</span>
+        <span class="sch-note">{{ s.notes }}</span>
+      </div>
+    </div>
+
+    <!-- 快捷统计 -->
+    <div class="zone-title" style="margin-top:20px"><span class="bar"></span><h2>工作概览</h2></div>
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <span class="ms-num">{{ today.active_cases }}</span>
+        <span class="ms-label">进行中案件</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-num" :class="{ 'ms-danger': today.overdue.length > 0 }">{{ today.overdue.length + today.today.length }}</span>
+        <span class="ms-label">待完成任务</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-num">{{ stats.totalCases }}</span>
+        <span class="ms-label">案件总数</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-num">{{ stats.documentsGenerated }}</span>
+        <span class="ms-label">生成文书</span>
+      </div>
+    </div>
+
+    <!-- 最近案件 -->
+    <div class="zone-title" style="margin-top:20px">
+      <span class="bar"></span><h2>最近案件</h2>
+      <router-link to="/cases" class="more">全部 ›</router-link>
+    </div>
+    <div class="card">
+      <div v-if="recentCases.length === 0" class="empty-hint">暂无案件</div>
+      <router-link v-for="c in recentCases" :key="c.id" :to="`/cases/${c.id}`" class="case-row">
+        <div class="case-ic">{{ (c.case_type || '案件').slice(0,2) }}</div>
+        <div class="case-main">
+          <div class="t">{{ c.case_type || '未命名' }}</div>
+          <div class="m" v-if="c.subject_amount">标的额 ¥{{ formatMoney(c.subject_amount) }}</div>
+        </div>
+        <span :class="statusBadgeClass(c.status)">{{ c.status || '未知' }}</span>
+        <span class="case-go">›</span>
+      </router-link>
     </div>
   </div>
 </template>
@@ -118,65 +128,150 @@
 import { ref, onMounted } from 'vue'
 import api from '../api'
 
-const stats = ref({ totalCases: 0, activeCases: 0, documentsGenerated: 0, pendingTodos: 0, newThisMonth: 0 })
+const today = ref({ date: '', overdue: [], today: [], upcoming: [], schedules: [], active_cases: 0 })
+const stats = ref({ totalCases: 0, documentsGenerated: 0 })
 const recentCases = ref([])
-const upcomingSchedules = ref([])
-const keyClients = ref([])
 
-function statusBadgeClass(status) {
-  if (status === '进行中') return 'badge badge-success'
-  if (status === '待立案') return 'badge badge-warning'
-  if (status === '已结案') return 'badge badge-neutral'
+function statusBadgeClass(s) {
+  if (s === '进行中') return 'badge badge-success'
+  if (s === '待立案') return 'badge badge-warning'
+  if (s === '已结案') return 'badge badge-neutral'
   return 'badge badge-info'
 }
-
 function formatMoney(v) { return Number(v || 0).toLocaleString('zh-CN') }
 
 onMounted(async () => {
   try {
-    const res = await api.get('/cases', { params: { page: 1, page_size: 5 } })
-    recentCases.value = res.data.items
-    stats.value.totalCases = res.data.total
+    const [todayRes, casesRes, historyRes] = await Promise.all([
+      api.get('/today'),
+      api.get('/cases', { params: { page: 1, page_size: 5 } }),
+      api.get('/documents/history', { params: { page_size: 1 } }),
+    ])
 
-    const active = await api.get('/cases', { params: { status: '进行中', page_size: 1 } })
-    stats.value.activeCases = active.data.total
-
-    const history = await api.get('/documents/history', { params: { page_size: 1 } })
-    stats.value.documentsGenerated = history.data.data.total || 0
-
-    // 加载日程（近期待办）
-    try {
-      const sch = await api.get('/schedules', { params: { page_size: 5 } })
-      const now = new Date()
-      const oneWeek = 7 * 24 * 60 * 60 * 1000
-      const items = sch.data.items || []
-      upcomingSchedules.value = items
-        .filter(s => {
-          const d = new Date(s.schedule_date)
-          return d >= now && d - now <= oneWeek
-        })
-        .sort((a, b) => new Date(a.schedule_date) - new Date(b.schedule_date))
-        .map(s => {
-          const d = new Date(s.schedule_date)
-          const diff = Math.ceil((d - now) / (24 * 60 * 60 * 1000))
-          return {
-            id: s.id,
-            days: diff === 0 ? '今天' : (diff === 1 ? '明天' : diff + '天后'),
-            time: s.schedule_date ? s.schedule_date.slice(11, 16) : '',
-            title: s.title || '未命名日程',
-            desc: s.description || '',
-          }
-        })
-      stats.value.pendingTodos = upcomingSchedules.value.length
-    } catch (e) { console.error('日程加载失败', e) }
-
-    // 加载客户
-    try {
-      const cl = await api.get('/clients', { params: { page_size: 5 } })
-      keyClients.value = cl.data.items || []
-    } catch (e) { console.error('客户加载失败', e) }
-  } catch (err) {
-    console.error('加载工作台数据失败', err)
+    today.value = todayRes.data
+    recentCases.value = casesRes.data.items
+    stats.value.totalCases = casesRes.data.total
+    stats.value.documentsGenerated = historyRes.data.data?.total || 0
+  } catch (e) {
+    console.error('加载工作台失败', e)
   }
 })
 </script>
+
+<style scoped>
+/* 现有样式沿用，新增以下 */
+
+.alert-zone {
+  background: #FCEBEB;
+  border: 1px solid #F09595;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.alert-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #A32D2D;
+  margin-bottom: 12px;
+}
+.alert-dot { width: 8px; height: 8px; border-radius: 50%; background: #E24B4A; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.alert-list { display: flex; flex-direction: column; gap: 8px }
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  border: 1px solid #F7C1C1;
+}
+.alert-item.overdue:hover { border-color: #E24B4A }
+.alert-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #E24B4A;
+  color: #fff;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.alert-label { font-size: 14px; color: var(--text-primary); flex: 1 }
+.alert-meta { font-size: 12px; color: var(--text-tertiary); flex-shrink: 0 }
+
+.zone-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  padding: 4px 0 10px;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0 }
+.today-dot { background: #E24B4A }
+.upcoming-dot { background: #EF9F27 }
+
+.deadline-zone { margin-bottom: 12px }
+.deadline-cards { display: flex; gap: 12px; flex-wrap: wrap }
+.deadline-card {
+  flex: 1;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+}
+.deadline-card:hover { border-color: var(--color-border-primary) }
+.today-card { background: #FCEBEB; border-color: #F7C1C1 }
+.upcoming-card { background: #FAEEDA; border-color: #FAC775 }
+.dc-type { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px }
+.today-card .dc-type { color: #A32D2D }
+.upcoming-card .dc-type { color: #854F0B }
+.dc-text { font-size: 14px; color: var(--text-primary); font-weight: 500; line-height: 1.4 }
+.dc-case, .dc-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 6px }
+.today-card .dc-meta { color: #A32D2D; font-weight: 500 }
+
+.mini-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mini-stat {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
+  background: var(--color-background-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-tertiary);
+  text-align: center;
+}
+.ms-num { display: block; font-size: 28px; font-weight: 500; color: var(--text-primary) }
+.ms-num.ms-danger { color: #E24B4A }
+.ms-label { display: block; font-size: 12px; color: var(--text-tertiary); margin-top: 4px }
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  font-size: 13px;
+}
+.schedule-row:last-child { border-bottom: none }
+.sch-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0 }
+.sch-court { background: #E24B4A }
+.sch-other { background: var(--accent) }
+.sch-type { color: var(--text-primary); min-width: 48px; font-weight: 500 }
+.sch-time { color: var(--text-tertiary); flex-shrink: 0 }
+.sch-note { color: var(--text-secondary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+.empty-hint { text-align: center; padding: 24px; color: var(--text-tertiary); font-size: 13px }
+
+/* 复用已有样式: quickbar, qchip, qgrp, qsep, zone-title, bar, card, case-row, badge, more 等 */
+</style>

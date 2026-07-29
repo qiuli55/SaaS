@@ -135,3 +135,19 @@ class VisitLog(Base):
     path = Column(String(500))
     method = Column(String(10))
     created_at = Column(DateTime, default=func.now())
+
+
+class CaseDeadline(Base):
+    """案件审限/截止日期"""
+    __tablename__ = "case_deadlines"
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    deadline_type = Column(String(30))   # 答辩期/举证期限/上诉期/开庭/管辖权异议/自定义
+    deadline_date = Column(DateTime)
+    notes = Column(String(200))
+    is_done = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=func.now())
+
+    case = relationship("Case")
+    user = relationship("User")
