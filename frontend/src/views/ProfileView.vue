@@ -9,23 +9,25 @@
         <div class="info-row">
           <span class="info-label">手机号</span>
           <div class="info-value-wrap">
-            <input v-if="editing" v-model="editForm.phone" class="edit-input" maxlength="11" />
+            <input v-if="editingPhone" v-model="editPhone" class="edit-input" maxlength="11" placeholder="新手机号" />
             <span v-else class="info-value">{{ user.phone }}</span>
-            <button @click="toggleEdit" class="edit-btn">{{ editing ? '取消' : '编辑' }}</button>
+            <button v-if="!editingPhone" @click="editingPhone = true" class="edit-btn">更改</button>
+            <button v-else @click="savePhone" class="edit-btn" style="color:#3B6D11">保存</button>
+            <button v-if="editingPhone" @click="editingPhone = false" class="edit-btn" style="color:var(--text-tertiary)">取消</button>
           </div>
         </div>
         <div class="info-row">
           <span class="info-label">姓名</span>
-          <div class="info-value-wrap">
-            <input v-if="editing" v-model="editForm.name" class="edit-input" />
-            <span v-else class="info-value">{{ user.name || '未设置' }}</span>
-          </div>
+          <span class="info-value">{{ user.name || '未设置' }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">律所</span>
           <div class="info-value-wrap">
-            <input v-if="editing" v-model="editForm.firm_name" class="edit-input" />
+            <input v-if="editingFirm" v-model="editFirm" class="edit-input" placeholder="律所名称" />
             <span v-else class="info-value">{{ user.firm_name || '未设置' }}</span>
+            <button v-if="!editingFirm" @click="editingFirm = true" class="edit-btn">更改</button>
+            <button v-else @click="saveFirm" class="edit-btn" style="color:#3B6D11">保存</button>
+            <button v-if="editingFirm" @click="editingFirm = false" class="edit-btn" style="color:var(--text-tertiary)">取消</button>
           </div>
         </div>
         <div class="info-row">
@@ -33,8 +35,6 @@
           <span class="info-value">{{ (user.created_at || '').slice(0, 10) }}</span>
         </div>
       </div>
-
-      <button v-if="editing" @click="saveProfile" class="btn btn-accent" style="width:100%;margin-bottom:28px">保存修改</button>
 
       <div class="profile-actions">
         <button @click="switchAccount" class="btn btn-outline">切换账号</button>
@@ -51,38 +51,32 @@ import api from '../api'
 
 const router = useRouter()
 const user = ref({})
-const editing = ref(false)
-const editForm = ref({ phone: '', name: '', firm_name: '' })
+const editingPhone = ref(false); const editPhone = ref('')
+const editingFirm = ref(false); const editFirm = ref('')
 
 onMounted(() => {
   const u = localStorage.getItem('user')
   user.value = u ? JSON.parse(u) : {}
-  resetForm()
+  editPhone.value = user.value.phone || ''
+  editFirm.value = user.value.firm_name || ''
 })
 
-function resetForm() {
-  editForm.value = {
-    phone: user.value.phone || '',
-    name: user.value.name || '',
-    firm_name: user.value.firm_name || ''
-  }
-  editing.value = false
-}
-
-function toggleEdit() {
-  if (editing.value) { resetForm() }
-  else { editing.value = true }
-}
-
-async function saveProfile() {
+async function savePhone() {
   try {
-    const r = await api.put('/user/profile', editForm.value)
+    const r = await api.put('/user/profile', { phone: editPhone.value })
     user.value = r.data
     localStorage.setItem('user', JSON.stringify(r.data))
-    editing.value = false
-  } catch(e) {
-    alert('保存失败：' + (e.response?.data?.detail || e.message))
-  }
+    editingPhone.value = false
+  } catch(e) { alert('保存失败：' + (e.response?.data?.detail || e.message)) }
+}
+
+async function saveFirm() {
+  try {
+    const r = await api.put('/user/profile', { firm_name: editFirm.value })
+    user.value = r.data
+    localStorage.setItem('user', JSON.stringify(r.data))
+    editingFirm.value = false
+  } catch(e) { alert('保存失败：' + (e.response?.data?.detail || e.message)) }
 }
 
 function switchAccount() {
