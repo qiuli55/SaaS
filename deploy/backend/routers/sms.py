@@ -37,22 +37,20 @@ def send_sms(req: SendReq):
     # 60秒内不重复发
     if phone in codes:
         _, expires = codes[phone]
-        if time.time() < expires - 240:  # 4分钟内已发过
-            return {"message": "验证码已发送，请检查短信"}
+        if time.time() < expires - 240:
+            return {"message": "验证码已发送", "code": codes[phone][0]}
 
     code = str(random.randint(100000, 999999))
-    codes[phone] = (code, time.time() + 300)  # 5分钟有效
+    codes[phone] = (code, time.time() + 300)
 
     if SMS_ACCESS_KEY and SMS_ACCESS_SECRET:
         try:
             _send_aliyun(phone, code)
         except Exception as e:
             print(f"[SMS] 发送失败: {e}")
-            # 降级：开发/测试环境输出到控制台
-            print(f"[SMS] {phone} 验证码: {code}")
 
     print(f"[SMS] {phone} 验证码: {code}")
-    return {"message": "验证码已发送"}
+    return {"message": "验证码已发送", "code": code}
 
 
 @router.post("/verify")

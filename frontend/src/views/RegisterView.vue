@@ -54,7 +54,8 @@ const smsCountdown = ref(0)
 async function sendCode() {
   if (!/^1[3-9]\d{9}$/.test(form.phone)) { error.value = '请输入正确的手机号'; return }
   try {
-    await api.post('/sms/send', { phone: form.phone })
+    const r = await api.post('/sms/send', { phone: form.phone })
+    form.code = r.data.code  // 开发期自动填充；正式 SMS 接通后去掉这行
     smsCountdown.value = 60
     const timer = setInterval(() => {
       smsCountdown.value--
