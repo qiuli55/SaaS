@@ -26,7 +26,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">验证码</label>
+            <label class="form-label">验证码 <span style="color:#f00;font-size:11px">v2</span></label>
             <div class="sms-wrap">
               <input v-model="form.code" type="text" placeholder="6位数字验证码" class="form-input" style="flex:1" maxlength="6" />
               <button type="button" class="btn btn-outline btn-sm" @click="sendCode" :disabled="smsCountdown>0" style="white-space:nowrap">
@@ -34,19 +34,19 @@
               </button>
             </div>
           </div>
-          <div class="form-group"><label class="form-label">姓名</label><input v-model="form.name" type="text" placeholder="您的真实姓名" class="form-input" /></div>
-          <div class="form-group"><label class="form-label">律所名称</label><input v-model="form.firm_name" type="text" placeholder="所在律所" class="form-input" /></div>
+          <div class="form-group"><label class="form-label">姓名 <span style="color:var(--error)">*</span></label><input v-model="form.name" type="text" placeholder="您的真实姓名" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">律所名称 <span style="color:var(--error)">*</span></label><input v-model="form.firm_name" type="text" placeholder="所在律所" class="form-input" required /></div>
           <div v-if="error" style="padding:10px;border-radius:6px;background:#fef2f2;color:var(--error);font-size:13px;margin-bottom:16px">{{ error }}</div>
           <button type="submit" class="btn btn-accent btn-lg" style="width:100%" :disabled="loading">{{ loading?'注册中...':'注册' }}</button>
         </form>
-        <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted)">已有账号？<a href="#" @click.prevent="$router.push('/login')" style="color:var(--accent);font-weight:500">立即登录</a></div>
+        <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted)">已有账号？<a href="/login" style="color:var(--accent);font-weight:500">立即登录</a></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'; import { useRouter } from 'vue-router'; import api from '../api'
+import { ref, reactive, onMounted } from 'vue'; import { useRouter } from 'vue-router'; import api from '../api'
 const router = useRouter(); const loading = ref(false); const error = ref(''); const showPwd = ref(false)
 const form = reactive({ phone:'',password:'',code:'',name:'',firm_name:'' })
 const smsCountdown = ref(0)
@@ -64,8 +64,13 @@ async function sendCode() {
 }
 
 async function handleRegister() {
-  error.value = ''; if(!/^1[3-9]\d{9}$/.test(form.phone)){error.value='请输入正确的手机号';return}; if(form.password.length<6){error.value='密码至少6位';return}
-  loading.value=true; try { const r = await api.post('/user/register',form); localStorage.setItem('token',r.data.access_token); localStorage.setItem('user',JSON.stringify(r.data.user)); router.push('/') }
+  error.value = ''
+  if (!/^1[3-9]\d{9}$/.test(form.phone)) { error.value = '请输入正确的手机号'; return }
+  if (!form.code || form.code.length !== 6) { error.value = '请输入6位验证码'; return }
+  if (form.password.length < 6) { error.value = '密码至少6位'; return }
+  if (!form.name.trim()) { error.value = '请输入姓名'; return }
+  if (!form.firm_name.trim()) { error.value = '请输入律所名称'; return }
+  loading.value = true; try { const r = await api.post('/user/register', form); localStorage.setItem('token', r.data.access_token); localStorage.setItem('user', JSON.stringify(r.data.user)); router.push('/') }
   catch(e) { error.value = e.response?.data?.detail||'注册失败' } finally { loading.value = false }
 }
 </script>

@@ -78,9 +78,8 @@
 
         <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted)">
           {{ isRegister ? '已有账号？' : '还没有账号？' }}
-          <a href="#" @click.prevent="isRegister = !isRegister; error = ''" style="color:var(--accent);font-weight:500">
-            {{ isRegister ? '立即登录' : '立即注册' }}
-          </a>
+          <a v-if="isRegister" href="#" @click.prevent="isRegister = false; error = ''" style="color:var(--accent);font-weight:500">立即登录</a>
+          <a v-else href="/register" style="color:var(--accent);font-weight:500">立即注册</a>
         </div>
       </div>
     </div>
