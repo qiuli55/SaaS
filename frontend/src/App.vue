@@ -81,6 +81,7 @@
         </button>
         <div class="crumb-bar"><b>{{ pageTitle }}</b></div>
         <div class="topbar-actions">
+          <router-link to="/privacy" class="btn btn-ghost btn-sm" style="font-size:12px;color:var(--text-tertiary)">数据安全</router-link>
           <button @click="logout" class="btn btn-ghost btn-sm">退出登录</button>
         </div>
       </header>

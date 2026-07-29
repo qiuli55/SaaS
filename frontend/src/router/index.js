@@ -89,6 +89,11 @@ const routes = [
     component: () => import('../views/AIChatView.vue'),
   },
   {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('../views/PrivacyView.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/',
   },

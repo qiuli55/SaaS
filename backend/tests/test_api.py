@@ -1,11 +1,12 @@
-"""核心 API 测试：认证 / 案件 / 日程 / 客户"""
+"""核心 API 测试：认证 / 案件 / 日程 / 客户 / 文件上传 / 改密"""
 import pytest
+import io
 
 
 class TestHealth:
-    def test_health(self, api):
-        r = api.get("/api/health")
-        assert r.status_code == 200
+    def test_app_running(self, api):
+        r = api.get("/api/user/info")  # 不需要登录也能测 401
+        assert r.status_code == 401  # 证明服务器在运行
 
 
 class TestAuth:
@@ -124,3 +125,104 @@ class TestClients:
         api.post("/api/clients", json={"name": "ExpClient", "phone": "13911110003"}, headers=auth)
         r = api.get("/api/clients/export", headers=auth)
         assert "spreadsheet" in r.headers.get("content-type", "")
+
+
+class TestPasswordChange:
+    def test_change_password_success(self, api, auth):
+        r = api.put("/api/user/password", json={
+            "old_password": "Test1234", "new_password": "NewPass456"
+        }, headers=auth)
+        assert r.status_code == 200
+        assert r.json()["message"] == "密码修改成功"
+
+    def test_wrong_old_password(self, api, auth):
+        r = api.put("/api/user/password", json={
+            "old_password": "WrongOld1", "new_password": "Whatever1"
+        }, headers=auth)
+        assert r.status_code == 400
+        assert "错误" in r.json()["detail"]
+
+    def test_same_password_rejected(self, api, auth):
+        r = api.put("/api/user/password", json={
+            "old_password": "Test1234", "new_password": "Test1234"
+        }, headers=auth)
+        assert r.status_code == 400
+
+    def test_login_with_new_password(self, api):
+        # 自包含：注册→改密→新密码登录
+        phone = "13800000050"
+        api.post("/api/user/register", json={"phone": phone, "password": "Test1234", "name": "PwdTest"})
+        token = api.post("/api/user/login", json={"phone": phone, "password": "Test1234"}).json()["access_token"]
+        h = {"Authorization": f"Bearer {token}"}
+        api.put("/api/user/password", json={"old_password": "Test1234", "new_password": "Changed99"}, headers=h)
+        r = api.post("/api/user/login", json={"phone": phone, "password": "Changed99"})
+        assert r.status_code == 200
+
+
+class TestProfileUpdate:
+    def test_update_name_and_firm(self, api, auth):
+        r = api.put("/api/user/profile", json={"name": "Lilawyer", "firm_name": "Zhengda"}, headers=auth)
+        assert r.status_code == 200
+        assert r.json()["name"] == "Lilawyer"
+        assert r.json()["firm_name"] == "Zhengda"
+
+
+class TestFileUpload:
+    def test_upload_txt(self, api, auth):
+        from conftest import fresh_auth
+        # 创建案件
+        r = api.post("/api/cases", json={"case_type": "Test"}, headers=auth)
+        cid = r.json()["id"]
+
+        r2 = api.post(
+            f"/api/cases/{cid}/files",
+            files=[("files", ("test.txt", io.BytesIO(b"hello world"), "text/plain"))],
+            headers=auth,
+        )
+        assert r2.status_code == 200
+
+    def test_reject_php_file(self, api, auth):
+        r = api.post("/api/cases", json={"case_type": "Test2"}, headers=auth)
+        cid = r.json()["id"]
+
+        r2 = api.post(
+            f"/api/cases/{cid}/files",
+            files=[("files", ("shell.php", io.BytesIO(b"<?php echo 1;"), "text/plain"))],
+            headers=auth,
+        )
+        assert r2.status_code == 400
+        assert "不支持" in r2.json()["detail"] or "文件" in str(r2.json())
+
+
+class TestSchedulesExtra:
+    def test_month_filter(self, api, auth):
+        api.post("/api/schedules", json={"event_type": "开庭", "event_date": "2026-07-10T08:00:00"}, headers=auth)
+        api.post("/api/schedules", json={"event_type": "开庭", "event_date": "2026-08-20T14:00:00"}, headers=auth)
+        r = api.get("/api/schedules?month=2026-07", headers=auth)
+        assert len(r.json()["data"]) == 1
+
+    def test_mark_done_toggle(self, api, auth):
+        r = api.post("/api/schedules", json={"event_type": "待办", "event_date": "2026-10-10T09:00:00"}, headers=auth)
+        sid = r.json()["data"]["id"]
+        r2 = api.put(f"/api/schedules/{sid}", json={"is_done": True}, headers=auth)
+        assert r2.json()["data"]["is_done"] is True
+
+
+class TestClientsExtra:
+    def test_search_by_keyword(self, api, auth):
+        api.post("/api/clients", json={"name": "Alice", "phone": "13922220001", "company": "ABCInc"}, headers=auth)
+        api.post("/api/clients", json={"name": "Bob", "phone": "13922220002", "company": "XYZLtd"}, headers=auth)
+        r = api.get("/api/clients", params={"keyword": "ABC"}, headers=auth)
+        assert r.json()["data"]["total"] == 1
+        assert r.json()["data"]["items"][0]["name"] == "Alice"
+
+
+class TestEdgeCases:
+    def test_nonexistent_case_404(self, api, auth):
+        r = api.get("/api/cases/99999", headers=auth)
+        assert r.status_code == 404
+
+    def test_empty_schedules_month(self, api, auth):
+        r = api.get("/api/schedules?month=2030-01", headers=auth)
+        assert r.status_code == 200
+        assert len(r.json()["data"]) == 0

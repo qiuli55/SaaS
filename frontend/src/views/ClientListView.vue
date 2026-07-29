@@ -1,7 +1,10 @@
 <template>
   <div>
     <div class="page-header">
-      <div><h1 class="page-title">客户通讯录</h1></div>
+      <div>
+        <h1 class="page-title">客户通讯录</h1>
+        <span style="font-size:12px;color:var(--accent);margin-left:12px;padding:2px 8px;background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:4px">🔒 数据仅您可见</span>
+      </div>
       <div style="display:flex;gap:8px">
         <button @click="exportExcel" class="btn btn-outline btn-sm">导出 Excel</button>
         <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
