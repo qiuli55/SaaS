@@ -59,6 +59,39 @@ app.include_router(schedules.router)
 app.include_router(chat.router)
 
 
+# 访问日志中间件
+from models import VisitLog
+from fastapi import Request
+
+@app.middleware("http")
+async def visit_log_middleware(request: Request, call_next):
+    if not request.url.path.startswith("/api/chat"):  # 避免记录心跳/轮询
+        try:
+            db = SessionLocal()
+            ip = request.client.host if request.client else "unknown"
+            log = VisitLog(ip=ip, path=request.url.path, method=request.method)
+            db.add(log)
+            db.commit()
+            db.close()
+        except:
+            pass
+    return await call_next(request)
+
+
+@app.get("/api/admin/logs")
+def view_logs(limit: int = 50):
+    try:
+        db = SessionLocal()
+        logs = db.query(VisitLog).order_by(VisitLog.created_at.desc()).limit(limit).all()
+        result = [{"ip": l.ip, "path": l.path, "method": l.method, "time": str(l.created_at)} for l in logs]
+        # 汇总独立 IP
+        ips = set(l.ip for l in logs)
+        db.close()
+        return {"count": len(logs), "unique_ips": list(ips), "logs": result}
+    except:
+        return {"error": "数据库不可用"}
+
+
 # 静态前端文件（部署时启用）
 FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
 if FRONTEND_DIST.exists():

@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Text, DECIMAL, Date, DateTime,
-    Boolean, ForeignKey, JSON
+    Boolean, ForeignKey, JSON, func
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -125,3 +125,13 @@ class Schedule(Base):
 
     user = relationship("User")
     case = relationship("Case")
+
+
+class VisitLog(Base):
+    """访问日志"""
+    __tablename__ = "visit_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    ip = Column(String(45), index=True)
+    path = Column(String(500))
+    method = Column(String(10))
+    created_at = Column(DateTime, default=func.now())
