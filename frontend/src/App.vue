@@ -70,12 +70,6 @@
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h10a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h6M6 9h6M6 12h4"/></svg>
           合同审查
         </router-link>
-
-        <div class="nav-zone">系统管理</div>
-        <router-link to="/admin/invite" class="sidebar-link" @click="sidebarOpen=false">
-          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l6 4-6 4-6-4 6-4z"/><path d="M3 9l6 4 6-4"/><path d="M3 13l6 4 6-4"/></svg>
-          邀请码管理
-        </router-link>
       </nav>
 
       <div class="sidebar-footer">
