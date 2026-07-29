@@ -15,6 +15,7 @@ def _generate_user_code(db: Session) -> str:
     return str(random.randint(10000000, 99999999))  # 极少数情况fallback
 from schemas import UserRegister, UserLogin, UserInfo, TokenResponse, UserUpdate, PasswordChange
 from auth import hash_password, verify_password, create_access_token, get_current_user
+from routers.sms import codes as sms_codes
 from limiter import limiter
 
 router = APIRouter(prefix="/api/user", tags=["用户"])
@@ -58,6 +59,21 @@ def register(req: UserRegister, request: Request, db: Session = Depends(get_db))
     existing = db.query(User).filter(User.phone == req.phone).first()
     if existing:
         raise HTTPException(status_code=400, detail="该手机号已注册")
+
+    # 验证码校验（如果短信服务已配置）
+    if sms_codes:
+        if not req.code:
+            raise HTTPException(status_code=400, detail="请输入短信验证码")
+        if req.phone not in sms_codes:
+            raise HTTPException(status_code=400, detail="请先发送验证码")
+        saved_code, expires = sms_codes[req.phone]
+        from time import time
+        if time() > expires:
+            sms_codes.pop(req.phone, None)
+            raise HTTPException(status_code=400, detail="验证码已过期，请重新发送")
+        if saved_code != req.code:
+            raise HTTPException(status_code=400, detail="验证码错误")
+        sms_codes.pop(req.phone, None)  # 验证通过后清除
 
     user = User(
         phone=req.phone, password_hash=hash_password(req.password),

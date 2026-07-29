@@ -25,6 +25,15 @@
               </button>
             </div>
           </div>
+          <div class="form-group">
+            <label class="form-label">验证码</label>
+            <div class="sms-wrap">
+              <input v-model="form.code" type="text" placeholder="6位数字验证码" class="form-input" style="flex:1" maxlength="6" />
+              <button type="button" class="btn btn-outline btn-sm" @click="sendCode" :disabled="smsCountdown>0" style="white-space:nowrap">
+                {{ smsCountdown>0 ? smsCountdown+'s' : '获取验证码' }}
+              </button>
+            </div>
+          </div>
           <div class="form-group"><label class="form-label">姓名</label><input v-model="form.name" type="text" placeholder="您的真实姓名" class="form-input" /></div>
           <div class="form-group"><label class="form-label">律所名称</label><input v-model="form.firm_name" type="text" placeholder="所在律所" class="form-input" /></div>
           <div v-if="error" style="padding:10px;border-radius:6px;background:#fef2f2;color:var(--error);font-size:13px;margin-bottom:16px">{{ error }}</div>
@@ -39,7 +48,20 @@
 <script setup>
 import { ref, reactive } from 'vue'; import { useRouter } from 'vue-router'; import api from '../api'
 const router = useRouter(); const loading = ref(false); const error = ref(''); const showPwd = ref(false)
-const form = reactive({ phone:'',password:'',name:'',firm_name:'' })
+const form = reactive({ phone:'',password:'',code:'',name:'',firm_name:'' })
+const smsCountdown = ref(0)
+
+async function sendCode() {
+  if (!/^1[3-9]\d{9}$/.test(form.phone)) { error.value = '请输入正确的手机号'; return }
+  try {
+    await api.post('/sms/send', { phone: form.phone })
+    smsCountdown.value = 60
+    const timer = setInterval(() => {
+      smsCountdown.value--
+      if (smsCountdown.value <= 0) clearInterval(timer)
+    }, 1000)
+  } catch(e) { error.value = e.response?.data?.detail || '发送失败' }
+}
 
 async function handleRegister() {
   error.value = ''; if(!/^1[3-9]\d{9}$/.test(form.phone)){error.value='请输入正确的手机号';return}; if(form.password.length<6){error.value='密码至少6位';return}
@@ -47,3 +69,7 @@ async function handleRegister() {
   catch(e) { error.value = e.response?.data?.detail||'注册失败' } finally { loading.value = false }
 }
 </script>
+
+<style scoped>
+.sms-wrap { display: flex; gap: 8px; align-items: center }
+</style>
