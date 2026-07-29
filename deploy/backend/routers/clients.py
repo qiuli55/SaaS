@@ -208,10 +208,19 @@ def export_clients(
 
     for c in clients:
         tags = c.tags or ""
-        try: tags = ", ".join(json.loads(tags))
-        except: pass
-        ws.append([c.name, c.phone, c.wechat, c.id_card, c.company, tags, c.remark,
-                   c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""])
+        try:
+            parsed = json.loads(tags)
+            tags = ", ".join(parsed) if isinstance(parsed, list) else str(parsed)
+        except:
+            pass
+        created = ""
+        try:
+            if c.created_at:
+                created = c.created_at.strftime("%Y-%m-%d %H:%M")
+        except:
+            pass
+        ws.append([c.name or "", c.phone or "", c.wechat or "", c.id_card or "",
+                   c.company or "", tags, c.remark or "", created])
 
     # 设置列宽
     for col, w in zip("ABCDEFGH", [12, 14, 14, 20, 20, 20, 30, 18]):
