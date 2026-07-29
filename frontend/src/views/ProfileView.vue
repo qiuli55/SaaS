@@ -8,17 +8,33 @@
       <div class="profile-info">
         <div class="info-row">
           <span class="info-label">手机号</span>
-          <span class="info-value">{{ user.phone }}</span>
+          <div class="info-value-wrap">
+            <input v-if="editing" v-model="editForm.phone" class="edit-input" maxlength="11" />
+            <span v-else class="info-value">{{ user.phone }}</span>
+            <button @click="toggleEdit" class="edit-btn">{{ editing ? '取消' : '编辑' }}</button>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">姓名</span>
+          <div class="info-value-wrap">
+            <input v-if="editing" v-model="editForm.name" class="edit-input" />
+            <span v-else class="info-value">{{ user.name || '未设置' }}</span>
+          </div>
         </div>
         <div class="info-row">
           <span class="info-label">律所</span>
-          <span class="info-value">{{ user.firm_name || '未设置' }}</span>
+          <div class="info-value-wrap">
+            <input v-if="editing" v-model="editForm.firm_name" class="edit-input" />
+            <span v-else class="info-value">{{ user.firm_name || '未设置' }}</span>
+          </div>
         </div>
         <div class="info-row">
           <span class="info-label">注册时间</span>
           <span class="info-value">{{ (user.created_at || '').slice(0, 10) }}</span>
         </div>
       </div>
+
+      <button v-if="editing" @click="saveProfile" class="btn btn-accent" style="width:100%;margin-bottom:28px">保存修改</button>
 
       <div class="profile-actions">
         <button @click="switchAccount" class="btn btn-outline">切换账号</button>
@@ -35,11 +51,39 @@ import api from '../api'
 
 const router = useRouter()
 const user = ref({})
+const editing = ref(false)
+const editForm = ref({ phone: '', name: '', firm_name: '' })
 
 onMounted(() => {
   const u = localStorage.getItem('user')
   user.value = u ? JSON.parse(u) : {}
+  resetForm()
 })
+
+function resetForm() {
+  editForm.value = {
+    phone: user.value.phone || '',
+    name: user.value.name || '',
+    firm_name: user.value.firm_name || ''
+  }
+  editing.value = false
+}
+
+function toggleEdit() {
+  if (editing.value) { resetForm() }
+  else { editing.value = true }
+}
+
+async function saveProfile() {
+  try {
+    const r = await api.put('/user/profile', editForm.value)
+    user.value = r.data
+    localStorage.setItem('user', JSON.stringify(r.data))
+    editing.value = false
+  } catch(e) {
+    alert('保存失败：' + (e.response?.data?.detail || e.message))
+  }
+}
 
 function switchAccount() {
   localStorage.removeItem('token')
@@ -80,7 +124,13 @@ async function deleteAccount() {
   border-bottom: 1px solid var(--color-border-tertiary); font-size: 14px
 }
 .info-label { color: var(--text-tertiary) }
+.info-value-wrap { display: flex; align-items: center; gap: 8px }
 .info-value { color: var(--text-primary) }
+.edit-input {
+  padding: 4px 8px; border: 1px solid var(--color-border-primary); border-radius: 6px;
+  font-size: 14px; width: 140px; background: var(--color-background-primary); color: var(--text-primary)
+}
+.edit-btn { font-size: 12px; color: var(--accent); background: none; border: none; cursor: pointer; white-space: nowrap }
 .profile-actions { display: flex; flex-direction: column; gap: 10px }
 .btn-danger { background: var(--color-background-danger); color: var(--color-text-danger); border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100% }
 .btn-danger:hover { opacity: .85 }
