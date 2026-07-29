@@ -104,6 +104,11 @@ const routes = [
     component: () => import('../views/TeamDetailView.vue'),
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/ProfileView.vue'),
+  },
+  {
     path: '/privacy',
     name: 'Privacy',
     component: () => import('../views/PrivacyView.vue'),

@@ -107,3 +107,12 @@ def change_password(req: PasswordChange, db: Session = Depends(get_db), current_
     current_user.password_hash = hash_password(req.new_password)
     db.commit()
     return {"code": 0, "message": "密码修改成功"}
+
+
+@router.delete("/account")
+def delete_account(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """注销账号"""
+    # 删除用户所有数据（cases/documents/files/clients/schedules等由外键CASCADE自动清理）
+    db.delete(current_user)
+    db.commit()
+    return {"message": "账号已注销"}

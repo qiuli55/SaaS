@@ -73,7 +73,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="sidebar-user" @click="logout">
+        <div class="sidebar-user" onclick="window.location.href='/profile'" style="cursor:pointer">
           <div class="sidebar-user-avatar">{{ userInitial }}</div>
           <div class="flex-1 min-w-0">
             <div class="sidebar-user-name truncate">{{ userName }} <span style="font-size:11px;color:var(--accent)">#{{ userCode }}</span></div>
