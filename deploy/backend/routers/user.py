@@ -15,7 +15,9 @@ def _generate_user_code(db: Session) -> str:
     return str(random.randint(10000000, 99999999))  # 极少数情况fallback
 from schemas import UserRegister, UserLogin, UserInfo, TokenResponse, UserUpdate, PasswordChange
 from auth import hash_password, verify_password, create_access_token, get_current_user
-from routers.sms import codes as sms_codes
+from routers.sms import verify_sms_code
+from models import InviteCode
+from datetime import datetime, timezone
 from limiter import limiter
 
 router = APIRouter(prefix="/api/user", tags=["用户"])
@@ -60,17 +62,16 @@ def register(req: UserRegister, request: Request, db: Session = Depends(get_db))
     if existing:
         raise HTTPException(status_code=400, detail="该手机号已注册")
 
-    # 验证码校验
-    if req.phone not in sms_codes:
-        raise HTTPException(status_code=400, detail="请先发送验证码")
-    saved_code, expires = sms_codes[req.phone]
-    from time import time
-    if time() > expires:
-        sms_codes.pop(req.phone, None)
-        raise HTTPException(status_code=400, detail="验证码已过期，请重新发送")
-    if saved_code != req.code:
-        raise HTTPException(status_code=400, detail="验证码错误")
-    sms_codes.pop(req.phone, None)
+    # 验证码校验（调阿里云 CheckSmsVerifyCode）
+    if not verify_sms_code(req.phone, req.code):
+        raise HTTPException(status_code=400, detail="验证码错误或已过期")
+
+    # 邀请码校验
+    invite = db.query(InviteCode).filter(InviteCode.code == req.invite_code.strip().upper()).first()
+    if not invite:
+        raise HTTPException(status_code=400, detail="邀请码无效")
+    if invite.is_used:
+        raise HTTPException(status_code=400, detail="邀请码已被使用")
 
     user = User(
         phone=req.phone, password_hash=hash_password(req.password),
@@ -80,6 +81,12 @@ def register(req: UserRegister, request: Request, db: Session = Depends(get_db))
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # 标记邀请码已使用
+    invite.is_used = True
+    invite.used_by = user.id
+    invite.used_at = datetime.now(timezone.utc)
+    db.commit()
 
     token = create_access_token(data={"sub": str(user.id)})
     return TokenResponse(access_token=token, user=UserInfo.model_validate(user))

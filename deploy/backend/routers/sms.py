@@ -1,21 +1,30 @@
-"""短信验证码 - 阿里云 SMS"""
-import random, time, os, json
-from fastapi import APIRouter, Depends, HTTPException
+"""短信验证码 - 阿里云号码认证服务 (dypnsapi)"""
+import time, os, json
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from database import get_db
-from auth import get_current_user
-from models import User
+
+def verify_sms_code(phone: str, code: str) -> bool:
+    """供其他模块调用的验证码校验（调阿里云 CheckSmsVerifyCode）"""
+    try:
+        result = _call_dypnsapi("CheckSmsVerifyCode", {
+            "PhoneNumber": phone,
+            "VerifyCode": code,
+        })
+        return result.get("Model", {}).get("VerifyResult") == "PASS"
+    except Exception as e:
+        print(f"[SMS] 核验失败: {e}")
+        return False
+
 
 router = APIRouter(prefix="/api/sms", tags=["短信"])
 
 SMS_ACCESS_KEY = os.environ.get("SMS_ACCESS_KEY", "")
 SMS_ACCESS_SECRET = os.environ.get("SMS_ACCESS_SECRET", "")
-SMS_SIGN_NAME = os.environ.get("SMS_SIGN_NAME", "")
-SMS_TEMPLATE_CODE = os.environ.get("SMS_TEMPLATE_CODE", "")
+SMS_SIGN_NAME = os.environ.get("SMS_SIGN_NAME", "恒创联众")
+SMS_TEMPLATE_CODE = os.environ.get("SMS_TEMPLATE_CODE", "100001")
 
-# 内存存储验证码（重启清空，够用了）
-codes = {}  # {phone: (code, expires_at)}
+# 防刷：记录手机号上次发送时间
+_last_send = {}  # {phone: timestamp}
 
 
 class SendReq(BaseModel):
@@ -29,80 +38,82 @@ class VerifyReq(BaseModel):
 
 @router.post("/send")
 def send_sms(req: SendReq):
-    """发送验证码"""
+    """发送验证码（阿里云端自动生成验证码并下发短信）"""
     phone = req.phone.strip()
     if not phone or len(phone) != 11 or not phone.startswith("1"):
         raise HTTPException(400, "请输入正确的手机号")
 
     # 60秒内不重复发
-    if phone in codes:
-        _, expires = codes[phone]
-        if time.time() < expires - 240:
-            return {"message": "验证码已发送", "code": codes[phone][0]}
+    now = time.time()
+    if phone in _last_send and now - _last_send[phone] < 60:
+        wait = int(60 - (now - _last_send[phone]))
+        raise HTTPException(429, f"请{wait}秒后再发送")
 
-    code = str(random.randint(100000, 999999))
-    codes[phone] = (code, time.time() + 300)
+    out_id = f"{phone}_{int(now * 1000)}"
+    _last_send[phone] = now
 
-    if SMS_ACCESS_KEY and SMS_ACCESS_SECRET:
-        try:
-            _send_aliyun(phone, code)
-        except Exception as e:
-            print(f"[SMS] 发送失败: {e}")
+    try:
+        _call_dypnsapi("SendSmsVerifyCode", {
+            "PhoneNumber": phone,
+            "SignName": SMS_SIGN_NAME,
+            "TemplateCode": SMS_TEMPLATE_CODE,
+            "TemplateParam": json.dumps({"code": "##code##", "min": "5"}),
+            "OutId": out_id,
+            "CodeLength": 6,
+        })
+        print(f"[SMS] 短信已发送到 {phone}")
+    except Exception as e:
+        print(f"[SMS] 发送失败: {e}")
+        raise HTTPException(500, f"短信发送失败: {e}")
 
-    print(f"[SMS] {phone} 验证码: {code}")
-    return {"message": "验证码已发送", "code": code}
+    return {"message": "验证码已发送", "out_id": out_id}
 
 
 @router.post("/verify")
-def verify_sms(req: VerifyReq):
-    """校验验证码"""
-    if req.phone not in codes:
-        return {"valid": False, "message": "请先发送验证码"}
-    saved_code, expires = codes[req.phone]
-    if time.time() > expires:
-        del codes[req.phone]
-        return {"valid": False, "message": "验证码已过期"}
-    if saved_code != req.code:
-        return {"valid": False, "message": "验证码错误"}
-    return {"valid": True, "message": "验证通过"}
+def verify_sms_endpoint(req: VerifyReq):
+    """核验验证码"""
+    if verify_sms_code(req.phone.strip(), req.code):
+        return {"valid": True, "message": "验证通过"}
+    return {"valid": False, "message": "验证码错误"}
 
 
-def _send_aliyun(phone: str, code: str):
-    """阿里云 SendSms API"""
-    import hmac, hashlib, base64, urllib.request, datetime
+def _call_dypnsapi(action: str, biz_params: dict) -> dict:
+    """调用阿里云号码认证服务 API (dypnsapi.aliyuncs.com)"""
+    import hmac, hashlib, base64, urllib.request, uuid
+    from urllib.request import HTTPError
+    from datetime import datetime, timezone
 
     params = {
         "AccessKeyId": SMS_ACCESS_KEY,
-        "SignatureMethod": "HMAC-SHA1",
-        "SignatureVersion": "1.0",
-        "SignatureNonce": str(random.randint(100000000000, 999999999999)),
-        "Timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "Action": action,
         "Format": "JSON",
-        "Action": "SendSms",
+        "SignatureMethod": "HMAC-SHA1",
+        "SignatureNonce": str(uuid.uuid4()),
+        "SignatureVersion": "1.0",
+        "Timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "Version": "2017-05-25",
-        "RegionId": "cn-hangzhou",
-        "PhoneNumbers": phone,
-        "SignName": SMS_SIGN_NAME,
-        "TemplateCode": SMS_TEMPLATE_CODE,
-        "TemplateParam": json.dumps({"code": code}),
     }
+    params.update(biz_params)
 
-    sorted_keys = sorted(params.keys())
-    canonical = "&".join(
-        f"{k}={_url_encode(str(params[k]))}" for k in sorted_keys
-    )
-    string_to_sign = f"GET&{_url_encode('/')}&{_url_encode(canonical)}"
-    key = bytes(SMS_ACCESS_SECRET + "&", "utf-8")
+    query = "&".join(f"{k}={_url_encode(str(params[k]))}" for k in sorted(params.keys()))
+    sign_str = f"GET&{_url_encode('/')}&{_url_encode(query)}"
     signature = base64.b64encode(
-        hmac.new(key, string_to_sign.encode("utf-8"), hashlib.sha1).digest()
+        hmac.new(f"{SMS_ACCESS_SECRET}&".encode(), sign_str.encode(), hashlib.sha1).digest()
     ).decode()
 
-    url = f"https://dysmsapi.aliyuncs.com/?Signature={_url_encode(signature)}&{canonical}"
-    req = urllib.request.Request(url)
-    resp = urllib.request.urlopen(req, timeout=10)
-    result = json.loads(resp.read())
-    if result.get("Code") != "OK":
-        raise Exception(result.get("Message", "SendSms failed"))
+    url = f"https://dypnsapi.aliyuncs.com/?Signature={_url_encode(signature)}&{query}"
+
+    proxy_handler = urllib.request.ProxyHandler({})
+    opener = urllib.request.build_opener(proxy_handler, urllib.request.HTTPSHandler())
+    try:
+        resp = opener.open(url)
+        body = json.loads(resp.read().decode())
+    except HTTPError as e:
+        err_body = e.read().decode()
+        raise Exception(f"HTTP {e.code}: {err_body}")
+    if body.get("Code") != "OK":
+        raise Exception(f"{body.get('Code')}: {body.get('Message')}")
+    return body
 
 
 def _url_encode(s: str) -> str:

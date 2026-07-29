@@ -26,7 +26,7 @@ except ImportError:
 from database import engine, Base, SessionLocal, get_db
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from routers import user, cases, documents, files, clients, schedules, chat, contract, teams, firms, sms
+from routers import user, cases, documents, files, clients, schedules, chat, contract, teams, firms, sms, invite
 from datetime import datetime
 from models import User
 from auth import get_current_user
@@ -65,6 +65,7 @@ app.include_router(contract.router)
 app.include_router(teams.router)
 app.include_router(firms.router)
 app.include_router(sms.router)
+app.include_router(invite.router)
 
 
 # 今日待办

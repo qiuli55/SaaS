@@ -1,3 +1,5 @@
+# Ignore dist except deploy distributable
+dist/
 !deploy/frontend/dist/
 # Database
 # IDE
@@ -12,6 +14,8 @@
 *.egg-info/
 *.log
 *.py[cod]
+*.zip
+*.7z
 .DS_Store
 .env
 .idea/

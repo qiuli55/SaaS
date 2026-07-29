@@ -188,3 +188,29 @@ class LawFirm(Base):
     name = Column(String(200), index=True)
     city = Column(String(50))
     created_at = Column(DateTime, default=func.now())
+
+
+class InviteCode(Base):
+    """邀请码"""
+    __tablename__ = "invite_codes"
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(12), unique=True, nullable=False, index=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    used_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=func.now())
+    used_at = Column(DateTime, nullable=True)
+
+    creator = relationship("User", foreign_keys=[created_by])
+    user = relationship("User", foreign_keys=[used_by])
+
+
+class UsageLog(Base):
+    """AI用量日志"""
+    __tablename__ = "usage_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    service_type = Column(String(20), nullable=False)  # chat/contract/case_analysis/document
+    created_at = Column(DateTime, default=func.now())
+
+    user = relationship("User")
