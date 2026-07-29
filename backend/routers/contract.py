@@ -13,14 +13,18 @@ router = APIRouter(prefix="/api/contract", tags=["合同审查"])
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 DEEPSEEK_URL = os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
 
+CONTRACT_API_KEY = os.environ.get("CONTRACT_API_KEY", DEEPSEEK_API_KEY)
+CASE_ANALYSIS_API_KEY = os.environ.get("CASE_ANALYSIS_API_KEY", DEEPSEEK_API_KEY)
+
 if not DEEPSEEK_API_KEY:
     print("[WARN] DEEPSEEK_API_KEY 未配置，合同审查和案件分析功能不可用")
 
 
-def _ask_deepseek(system_prompt: str, user_content: str) -> str:
+def _ask_deepseek(system_prompt: str, user_content: str, api_key: str = None) -> str:
     """通用 DeepSeek 调用"""
-    if not DEEPSEEK_API_KEY:
-        return "AI 功能未配置，请在 .env 中设置 DEEPSEEK_API_KEY"
+    key = api_key or DEEPSEEK_API_KEY
+    if not key:
+        return "AI 功能未配置，请在 .env 中设置 API Key"
 
     body = {
         "model": "deepseek-chat",
@@ -32,7 +36,7 @@ def _ask_deepseek(system_prompt: str, user_content: str) -> str:
         "max_tokens": 4000,
     }
     resp = httpx.post(DEEPSEEK_URL, json=body, headers={
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
     }, timeout=90)
     if resp.status_code != 200:
@@ -70,7 +74,7 @@ async def review_contract(req: ContractReviewReq, user=Depends(get_current_user)
     elif req.review_type == "risks_only":
         type_hint = "\n请仅列出风险点和修改建议，不需要完整分析。"
 
-    result = _ask_deepseek(CONTRACT_SYSTEM_PROMPT, req.content + type_hint)
+    result = _ask_deepseek(CONTRACT_SYSTEM_PROMPT, req.content + type_hint, CONTRACT_API_KEY)
     return {"result": result}
 
 
@@ -141,7 +145,7 @@ async def analyze_case(
     if not DEEPSEEK_API_KEY:
         return {"error": "AI 功能未配置"}
 
-    result = _ask_deepseek(CASE_ANALYSIS_PROMPT, analysis_text[:12000])
+    result = _ask_deepseek(CASE_ANALYSIS_PROMPT, analysis_text[:12000], CASE_ANALYSIS_API_KEY)
 
     # 保存分析结果到案件备注
     try:
