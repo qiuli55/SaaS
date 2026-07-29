@@ -120,3 +120,22 @@ def unshare_case(team_id: int, case_id: int, db: Session = Depends(get_db), user
     case.team_id = None
     db.commit()
     return {"message": "已取消共享"}
+
+
+@router.delete("/{team_id}")
+def delete_team(team_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    """解散团队（仅 owner 可操作）"""
+    t = db.query(Team).filter(Team.id == team_id).first()
+    if not t:
+        raise HTTPException(404, "团队不存在")
+    if t.owner_id != user.id:
+        raise HTTPException(403, "只有创建者可以解散团队")
+
+    # 先解除所有关联案件
+    db.query(Case).filter(Case.team_id == team_id).update({Case.team_id: None})
+    # 删除所有成员
+    db.query(TeamMember).filter(TeamMember.team_id == team_id).delete()
+    # 删除团队
+    db.delete(t)
+    db.commit()
+    return {"message": "团队已解散"}

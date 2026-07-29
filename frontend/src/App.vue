@@ -44,6 +44,12 @@
           客户通讯录
         </router-link>
 
+        <div class="nav-zone">协作团队</div>
+        <router-link to="/teams" class="sidebar-link" @click="sidebarOpen=false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="6" r="3"/><circle cx="13" cy="6" r="2"/><path d="M2 14v-1a4 4 0 014-4h2a4 4 0 014 4v1"/><path d="M11 14v-1a2 2 0 012-2"/></svg>
+          我的团队
+        </router-link>
+
         <div class="nav-zone">日程中心</div>
         <router-link to="/calendar" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="14" height="13" rx="1"/><path d="M2 7h14"/><path d="M6 1v3"/><path d="M12 1v3"/></svg>
@@ -63,10 +69,6 @@
         <router-link to="/contract" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h10a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h6M6 9h6M6 12h4"/></svg>
           合同审查
-        <router-link to="/teams" class="sidebar-link" @click="sidebarOpen=false">
-          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="6" r="3"/><circle cx="13" cy="6" r="2"/><path d="M2 14v-1a4 4 0 014-4h2a4 4 0 014 4v1"/><path d="M11 14v-1a2 2 0 012-2"/></svg>
-          协作团队
-        </router-link>
         </router-link>
       </nav>
 
@@ -74,7 +76,7 @@
         <div class="sidebar-user" @click="logout">
           <div class="sidebar-user-avatar">{{ userInitial }}</div>
           <div class="flex-1 min-w-0">
-            <div class="sidebar-user-name truncate">{{ userName }}</div>
+            <div class="sidebar-user-name truncate">{{ userName }} <span style="font-size:11px;color:var(--accent)">#{{ userCode }}</span></div>
             <div class="sidebar-user-role">{{ userFirm }}</div>
           </div>
         </div>
@@ -115,6 +117,7 @@ const userStr = localStorage.getItem('user')
 const user = userStr ? JSON.parse(userStr) : {}
 const userName = user?.name || user?.phone || ''
 const userFirm = user?.firm_name || ''
+const userCode = user?.user_code || ''
 const userInitial = (user?.name || user?.phone || '律')[0]
 
 const isAuthPage = computed(() => route.meta?.noAuth === true)

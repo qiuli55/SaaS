@@ -22,6 +22,7 @@ class UserInfo(BaseModel):
     phone: str
     name: str
     firm_name: str
+    user_code: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -219,6 +220,11 @@ class UserUpdate(BaseModel):
 class PasswordChange(BaseModel):
     old_password: str = Field(..., min_length=6, max_length=32)
     new_password: str = Field(..., min_length=6, max_length=32)
+
+
+class DocumentUpdate(BaseModel):
+    final_content: Optional[str] = None
+    status: Optional[str] = None
 
 
 class TokenResponse(BaseModel):

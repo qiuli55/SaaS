@@ -1,8 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 import os
+import random
 from database import get_db
 from models import User
+
+
+def _generate_user_code(db: Session) -> str:
+    """生成唯一8位数字ID"""
+    for _ in range(100):
+        code = str(random.randint(10000000, 99999999))
+        if not db.query(User).filter(User.user_code == code).first():
+            return code
+    return str(random.randint(10000000, 99999999))  # 极少数情况fallback
 from schemas import UserRegister, UserLogin, UserInfo, TokenResponse, UserUpdate, PasswordChange
 from auth import hash_password, verify_password, create_access_token, get_current_user
 from limiter import limiter
@@ -52,6 +62,7 @@ def register(req: UserRegister, request: Request, db: Session = Depends(get_db))
     user = User(
         phone=req.phone, password_hash=hash_password(req.password),
         name=req.name or "", firm_name=req.firm_name or "",
+        user_code=_generate_user_code(db),
     )
     db.add(user)
     db.commit()

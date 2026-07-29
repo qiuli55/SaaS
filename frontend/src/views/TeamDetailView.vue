@@ -8,6 +8,8 @@
       <div style="display:flex;gap:8px">
         <button @click="showInvite = true" class="btn btn-outline btn-sm">邀请成员</button>
         <router-link to="/cases/new" class="btn btn-accent btn-sm">添加案件</router-link>
+        <button v-if="team.owner_id === myUserId" @click="disbandTeam" class="btn btn-ghost btn-sm" style="color:var(--color-text-danger)">解散团队</button>
+        <button v-if="team.owner_id !== myUserId" @click="leaveTeam" class="btn btn-ghost btn-sm" style="color:var(--color-text-danger)">退出团队</button>
       </div>
     </div>
 
@@ -58,7 +60,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api from '../api'
 
 const route = useRoute(); const teamId = route.params.id
@@ -86,6 +88,22 @@ async function removeMember(userId) {
     await api.delete(`/teams/${teamId}/members/${userId}`)
     const r = await api.get(`/teams/${teamId}`); team.value = r.data
   } catch(e) { alert('移除失败') }
+}
+
+async function disbandTeam() {
+  if (!confirm('确定解散该团队？所有成员将被移除。')) return
+  try {
+    await api.delete(`/teams/${teamId}`)
+    router.push('/teams')
+  } catch(e) { alert('解散失败') }
+}
+
+async function leaveTeam() {
+  if (!confirm('确定退出该团队？')) return
+  try {
+    await api.delete(`/teams/${teamId}/members/${myUserId.value}`)
+    router.push('/teams')
+  } catch(e) { alert('退出失败') }
 }
 </script>
 

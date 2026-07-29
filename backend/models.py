@@ -12,6 +12,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     phone = Column(String(11), unique=True, nullable=False, index=True)
+    user_code = Column(String(8), unique=True, nullable=True)  # 8位唯一数字ID
     password_hash = Column(String(128), nullable=False)
     name = Column(String(50), default="")
     firm_name = Column(String(100), default="")

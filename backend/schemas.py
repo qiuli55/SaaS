@@ -22,6 +22,7 @@ class UserInfo(BaseModel):
     phone: str
     name: str
     firm_name: str
+    user_code: Optional[str] = None
     created_at: datetime
 
     class Config:

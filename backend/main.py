@@ -68,7 +68,7 @@ app.include_router(firms.router)
 
 # 今日待办
 from models import CaseDeadline, Case, Schedule
-from sqlalchemy import and_
+from sqlalchemy import func, and_
 
 @app.get("/api/today")
 def today_tasks(
