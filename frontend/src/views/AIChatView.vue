@@ -1,14 +1,14 @@
 <template>
   <div>
-    <div class="zone-title"><span class="bar"></span><h2>AI 法律助手</h2></div>
+    <div class="zone-title"><span class="bar"></span><h2>Lexi</h2></div>
 
     <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:500px">
       <!-- 消息区 -->
       <div class="chat-messages" ref="msgBox">
         <div v-if="messages.length === 0" class="chat-welcome">
           <div class="chat-welcome-icon">⚖️</div>
-          <div class="chat-welcome-title">AI 法律助手</div>
-          <div class="chat-welcome-desc">我是您的 AI 律师助手，可以帮您解答法律问题、分析案情、提供诉讼建议。</div>
+          <div class="chat-welcome-title">Lexi</div>
+          <div class="chat-welcome-desc">我是您的 Lexi 智能助理，可以帮您解答法律问题、分析案情、提供诉讼建议。</div>
           <div class="chat-welcome-hints">
             <button v-for="h in hints" :key="h" class="chat-hint" @click="send(h)">{{ h }}</button>
           </div>

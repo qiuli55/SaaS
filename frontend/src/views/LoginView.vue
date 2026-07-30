@@ -3,8 +3,8 @@
     <!-- 左侧品牌区 -->
     <div class="login-left">
       <div class="login-brand">
-        <div class="login-brand-icon">法</div>
-        <span class="login-brand-text">法律AI助手</span>
+        <img src="/lexi-icon.svg" style="width:44px;height:44px;border-radius:8px" alt="Lexi" />
+        <span class="login-brand-text">Lexi 莱希</span>
       </div>
       <h1 class="login-hero-title">AI 驱动的<br />法律文书生成平台</h1>
       <p class="login-hero-desc">面向中小律所的轻量级 AI 文书生成 + 案件管理工具。打开浏览器就能用，让每位律师都能高效执业。</p>

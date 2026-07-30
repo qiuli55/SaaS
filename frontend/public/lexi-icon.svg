@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Lexi 首页图标">
+  <defs>
+    <linearGradient id="lexiNavy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#27406F"/>
+      <stop offset="1" stop-color="#121E38"/>
+    </linearGradient>
+  </defs>
+  <!-- 圆角方底 -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#lexiNavy)"/>
+  <!-- 圆角 L 字标（白色） -->
+  <path d="M172 140 V362 H342" fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 金色点缀：呼应 Lexi 中字母 i 的点，亦象征天平支点 -->
+  <circle cx="172" cy="107" r="15" fill="#CBA35B"/>
+</svg>

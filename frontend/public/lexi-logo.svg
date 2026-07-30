@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160" width="480" height="160" role="img" aria-label="Lexi 莱希 横版 Logo">
+  <defs>
+    <linearGradient id="lexiNavy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#27406F"/>
+      <stop offset="1" stop-color="#121E38"/>
+    </linearGradient>
+    <g id="lexiMark">
+      <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#lexiNavy)"/>
+      <path d="M172 140 V362 H342" fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="172" cy="107" r="15" fill="#CBA35B"/>
+    </g>
+  </defs>
+
+  <!-- 图标 96x96 -->
+  <use href="#lexiMark" transform="translate(32,32) scale(0.1875)"/>
+
+  <!-- 文字 -->
+  <text x="150" y="86" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-weight="700" font-size="58" letter-spacing="-1" fill="#15233F">Lexi</text>
+  <text x="152" y="124" font-family="'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif" font-weight="500" font-size="28" letter-spacing="3" fill="#5B6678">莱希</text>
+</svg>

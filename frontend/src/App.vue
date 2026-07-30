@@ -11,8 +11,8 @@
     <!-- 侧边栏：按功能分区 -->
     <aside class="sidebar" :class="{ open: sidebarOpen }">
       <div class="sidebar-brand">
-        <div class="sidebar-brand-icon">法</div>
-        <span class="sidebar-brand-text">法律AI助手</span>
+        <img src="/lexi-icon.svg" class="sidebar-brand-icon" alt="Lexi" style="width:36px;height:36px;border-radius:6px" />
+        <span class="sidebar-brand-text">Lexi 莱希</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -64,7 +64,7 @@
         <div class="nav-zone">智能工具</div>
         <router-link to="/chat" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l6 2v5c0 4-3 6-6 8-3-2-6-4-6-8V4l6-2z"/><path d="M6.5 9l2 2 3.5-4"/></svg>
-          AI 法律助手
+          Lexi
         </router-link>
         <router-link to="/contract" class="sidebar-link" @click="sidebarOpen=false">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h10a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h6M6 9h6M6 12h4"/></svg>
@@ -120,7 +120,7 @@
       </router-link>
       <router-link to="/chat">
         <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2l6 2v5c0 4-3 6-6 8-3-2-6-4-6-8V4l6-2z"/><path d="M6.5 9l2 2 3.5-4"/></svg>
-        AI助手
+        Lexi
       </router-link>
     </nav>
 
@@ -163,7 +163,7 @@ const pageTitle = computed(() => {
     'ClientDetail': '客户详情',
     'Calendar': '日历日程',
   }
-  return titles[route.name] || '法律AI助手'
+  return titles[route.name] || 'Lexi 莱希'
 })
 
 function logout() {

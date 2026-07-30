@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <!-- 悬浮按钮 -->
-    <button v-if="!open" class="float-btn" @click="openChat" title="AI 法律助手">
+    <button v-if="!open" class="float-btn" @click="openChat" title="Lexi">
       <svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l6 2v5c0 4-3 6-6 8-3-2-6-4-6-8V4l6-2z"/><path d="M6.5 9l2 2 3.5-4"/></svg>
     </button>
 
@@ -9,7 +9,7 @@
     <div v-if="open" class="float-panel" :style="panelStyle" @mousedown="bringToFront">
       <!-- 标题栏（可拖拽） -->
       <div class="float-bar" @mousedown.prevent="startDrag($event)">
-        <span class="float-title">🤖 AI 法律助手</span>
+        <span class="float-title">🤖 Lexi</span>
         <div class="float-actions">
           <button class="float-action" @click="toggleSize" :title="expanded ? '缩小' : '放大'">
             <svg v-if="expanded" width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12v3h3"/><path d="M15 6V3h-3"/><path d="M13 3l-4 4"/><path d="M5 15l4-4"/></svg>

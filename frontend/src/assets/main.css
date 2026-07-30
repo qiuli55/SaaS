@@ -4,16 +4,17 @@
 
 /* 设计令牌 */
 :root {
-  --navy-900: #0f2942;
-  --navy-800: #1a3c5e;
-  --navy-700: #234c73;
-  --navy-600: #2d5a87;
-  --navy-500: #3b6fa3;
-  --navy-400: #5a8ab8;
-  --navy-300: #8aafd0;
-  --navy-200: #c5d9e8;
-  --navy-100: #e3edf5;
-  --navy-50: #f1f6fa;
+  --navy-900: #121E38;
+  --navy-800: #15233F;
+  --navy-700: #1E3561;
+  --navy-600: #27406F;
+  --navy-500: #3B5998;
+  --navy-400: #5A7FBA;
+  --navy-300: #8AABD4;
+  --navy-200: #BCCDE6;
+  --navy-100: #D8E2F1;
+  --navy-50: #EEF3FA;
+  --gold: #CBA35B;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --success: #059669;
@@ -1134,9 +1135,10 @@ body {
 }
 
 /* 日历：移动端改为列表视图 */
+.calendar-mobile-list { display: none; }
 @media (max-width: 768px) {
   .calendar-grid { display: none; }
-  
+
   .calendar-mobile-list {
     display: block;
   }

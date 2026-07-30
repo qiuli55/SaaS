@@ -1,8 +1,8 @@
 <template>
   <div class="login-page">
     <div class="login-left">
-      <div class="login-brand"><div class="login-brand-icon">法</div><span class="login-brand-text">法律AI助手</span></div>
-      <h1 class="login-hero-title">加入我们<br />高效执业</h1>
+      <div class="login-brand"><img src="/lexi-icon.svg" style="width:44px;height:44px;border-radius:8px" alt="Lexi" /><span class="login-brand-text">Lexi 莱希</span></div>
+      <h1 class="login-hero-title">加入 Lexi<br />高效执业</h1>
       <p class="login-hero-desc">注册账号即可免费体验 AI 文书生成、案件管理、客户通讯录等全部功能。</p>
     </div>
     <div class="login-right">

@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul
-title Lexi 莱希 - 一键部署
+title 法律AI助手 - 一键部署
 
 echo.
 echo ========================================
-echo   Lexi 莱希 - 服务器部署脚本
+echo   法律AI助手 - 服务器部署脚本
 echo   域名: qiuli55.top
 echo ========================================
 echo.

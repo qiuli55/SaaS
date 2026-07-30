@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="法律AI助手",
+    title="Lexi 莱希",
     description="面向小律所的轻量 AI 文书生成 + 案件管理系统",
     version="1.0.0",
     lifespan=lifespan,
@@ -181,7 +181,7 @@ if FRONTEND_DIST.exists():
 def root():
     if FRONTEND_DIST.exists():
         return FileResponse(FRONTEND_DIST / "index.html")
-    return {"name": "法律AI助手 API", "version": "1.0.0", "status": "running"}
+    return {"name": "Lexi 莱希 API", "version": "1.0.0", "status": "running"}
 
 
 @app.get("/api/health")

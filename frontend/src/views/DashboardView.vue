@@ -24,7 +24,7 @@
         <div class="qsep"></div>
         <div class="qgrp">
           <span class="qgrp-label">智能助手</span>
-          <button type="button" class="qchip" style="background:linear-gradient(135deg,var(--accent),var(--navy-600));color:#fff;border-color:transparent" @click="toggleChat"><span class="qic" style="background:rgba(255,255,255,.18)">✨</span><span class="qlab">AI 法律助手</span></button>
+          <button type="button" class="qchip" style="background:linear-gradient(135deg,var(--accent),var(--navy-600));color:#fff;border-color:transparent" @click="toggleChat"><span class="qic" style="background:rgba(255,255,255,.18)">✨</span><span class="qlab">Lexi</span></button>
         </div>
       </div>
     </div>
