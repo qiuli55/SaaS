@@ -260,5 +260,6 @@ class UsageInfo(BaseModel):
     contract: int = 0
     case_analysis: int = 0
     document: int = 0
+    law_search: int = 0
     total: int = 0
-    daily_limit: int = 50
+    daily_limit: Optional[int] = 50  # None = 不限量（付费套餐）

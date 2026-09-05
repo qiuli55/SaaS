@@ -6,7 +6,7 @@ from database import get_db
 from models import Client, User, Case
 import io
 import json
-from schemas import ClientCreate, ClientUpdate, ClientInfo
+from schemas import ClientCreate, ClientUpdate
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/clients", tags=["客户"])

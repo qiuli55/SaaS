@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from database import get_db
 from models import Schedule, User, Case
-from schemas import ScheduleCreate, ScheduleUpdate, ScheduleInfo
+from schemas import ScheduleCreate, ScheduleUpdate
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/schedules", tags=["日程"])

@@ -15,6 +15,7 @@ from models import Document, Case, User
 from schemas import DocumentGenerate, DocumentInfo, DocumentUpdate
 from auth import get_current_user
 from limiter import limiter
+from .quota import check_quota
 
 router = APIRouter(tags=["文书"])
 _TESTING = os.environ.get("TESTING") == "1"
@@ -166,6 +167,11 @@ async def generate_document(
 ):
     if not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your-deepseek-api-key-here":
         raise HTTPException(status_code=500, detail="请先配置 DeepSeek API Key")
+
+    # AI 用量配额校验（受 QUOTA_ENABLED 控制，默认开启）
+    if os.getenv("QUOTA_ENABLED", "true").lower() == "true":
+        if not check_quota(current_user.id, "document", db):
+            raise HTTPException(status_code=429, detail="今日 AI 文书生成次数已达上限，请明日再试")
 
     # 获取案件信息
     case = db.query(Case).filter(

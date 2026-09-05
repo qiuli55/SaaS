@@ -49,7 +49,7 @@ echo.
 echo [4/6] 启动后端服务 (端口 8001)...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8001.*LISTENING') do taskkill /F /PID %%a 2>nul
 timeout /t 2 /nobreak >nul
-cd /d %~dp0backend
+cd /d %~dp0..\backend
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
 start "法律AI后端" cmd /c "set PYTHONIOENCODING=utf-8 && set PYTHONUTF8=1 && python -m uvicorn main:app --host 0.0.0.0 --port 8001"
@@ -110,7 +110,7 @@ echo         ssl_certificate_key conf/ssl/qiuli55.top.key;
 echo         ssl_protocols TLSv1.2 TLSv1.3;
 echo         ssl_ciphers HIGH:!aNULL:!MD5;
 echo         
-echo         root "%~dp0frontend\dist";
+echo         root "%~dp0..\frontend\dist";
 echo         
 echo         location / {
 echo             try_files $uri $uri/ /index.html;
@@ -125,7 +125,7 @@ echo             proxy_set_header X-Forwarded-Proto $scheme;
 echo         }
 echo         
 echo         location /uploads/ {
-echo             alias "%~dp0backend\uploads\";
+echo             alias "%~dp0..\backend\uploads\";
 echo         }
 echo     }
 echo }
@@ -141,8 +141,8 @@ start "法律AI前端" nginx.exe
 echo.
 echo [6/6] 配置数据库自动备份...
 :: 每天凌晨3点备份数据库
-schtasks /create /tn "法律AI-数据库备份" /tr "copy /Y %~dp0backend\legal_ai.db %~dp0backend\backup\legal_ai_%%date:~0,4%%%%date:~5,2%%%%date:~8,2%%.db" /sc daily /st 03:00 /f 2>nul
-if not exist "%~dp0backend\backup" mkdir "%~dp0backend\backup"
+schtasks /create /tn "法律AI-数据库备份" /tr "copy /Y %~dp0..\backend\legal_ai.db %~dp0..\backend\backup\legal_ai_%%date:~0,4%%%%date:~5,2%%%%date:~8,2%%.db" /sc daily /st 03:00 /f 2>nul
+if not exist "%~dp0..\backend\backup" mkdir "%~dp0..\backend\backup"
 
 echo.
 echo ========================================

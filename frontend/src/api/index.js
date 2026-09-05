@@ -2,7 +2,9 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  // AI 类接口（合同审查/案件分析/文书生成/对话）调用 DeepSeek 可能耗时较长，
+  // 详细审查报告可能需 1~3 分钟，统一放宽到 240s。
+  timeout: 240000,
 })
 
 // 请求拦截器：自动附加 token

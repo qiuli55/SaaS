@@ -1,10 +1,14 @@
+"""Lexi 莱希后端入口：装配全部路由、CORS、访问日志中间件与静态前端托管。"""
 import os
+import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+logger = logging.getLogger(__name__)
 
 # 使用 python-dotenv 加载 .env
 try:
@@ -26,7 +30,7 @@ except ImportError:
 from database import engine, Base, SessionLocal, get_db
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from routers import user, cases, documents, files, clients, schedules, chat, contract, teams, firms, sms, invite
+from routers import user, cases, documents, files, clients, schedules, chat, contract, teams, firms, sms, invite, quota, billing, citation, law_search
 from datetime import datetime
 from models import User
 from auth import get_current_user
@@ -35,6 +39,10 @@ from auth import get_current_user
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    # 确保默认套餐存在（幂等）
+    from routers.billing import ensure_plans
+    with SessionLocal() as _db:
+        ensure_plans(_db)
     yield
 
 
@@ -45,9 +53,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS：不再使用 "*" + allow_credentials 的危险组合。
+# 通过环境变量 CORS_ORIGINS 追加你的前端域名（逗号分隔）。
+_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,https://qiuli55.top",
+    ).split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,11 +85,15 @@ app.include_router(teams.router)
 app.include_router(firms.router)
 app.include_router(sms.router)
 app.include_router(invite.router)
+app.include_router(quota.router)
+app.include_router(billing.router)
+app.include_router(citation.router)
+app.include_router(law_search.router)
 
 
 # 今日待办
 from models import CaseDeadline, Case, Schedule
-from sqlalchemy import func, and_
+from sqlalchemy import func
 
 @app.get("/api/today")
 def today_tasks(
@@ -131,6 +154,7 @@ from fastapi import Request
 
 @app.middleware("http")
 async def visit_log_middleware(request: Request, call_next):
+    db = None
     if not request.url.path.startswith("/api/chat"):  # 避免记录心跳/轮询
         try:
             db = SessionLocal()
@@ -138,23 +162,37 @@ async def visit_log_middleware(request: Request, call_next):
             log = VisitLog(ip=ip, path=request.url.path, method=request.method)
             db.add(log)
             db.commit()
-            db.close()
-        except:
-            pass
+        except Exception as e:
+            # 日志记录失败不应影响主请求
+            logger.warning("访问日志记录失败 path=%s: %s", request.url.path, e)
+        finally:
+            if db:
+                db.close()
     return await call_next(request)
 
 
+# 仅允许白名单内的管理员访问运维接口
+ADMIN_USER_IDS = {
+    int(x) for x in os.getenv("ADMIN_USER_IDS", "").split(",") if x.strip().isdigit()
+}
+
+
 @app.get("/api/admin/logs")
-def view_logs(limit: int = 50):
+def view_logs(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id not in ADMIN_USER_IDS:
+        raise HTTPException(status_code=403, detail="无权限访问")
     try:
-        db = SessionLocal()
         logs = db.query(VisitLog).order_by(VisitLog.created_at.desc()).limit(limit).all()
         result = [{"ip": l.ip, "path": l.path, "method": l.method, "time": str(l.created_at)} for l in logs]
         # 汇总独立 IP
         ips = set(l.ip for l in logs)
-        db.close()
         return {"count": len(logs), "unique_ips": list(ips), "logs": result}
-    except:
+    except Exception as e:
+        logger.error("查询访问日志失败: %s", e)
         return {"error": "数据库不可用"}
 
 
@@ -170,8 +208,14 @@ if FRONTEND_DIST.exists():
         if first in ("api", "docs", "openapi.json", "favicon.ico"):
             from fastapi.responses import JSONResponse
             return JSONResponse({"detail": "Not Found"}, status_code=404)
-        
-        file_path = FRONTEND_DIST / path
+
+        # 路径穿越防护：解析后必须仍位于 FRONTEND_DIST 之内
+        dist_root = FRONTEND_DIST.resolve()
+        file_path = (FRONTEND_DIST / path).resolve()
+        if file_path != dist_root and dist_root not in file_path.parents:
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+
         if file_path.is_file() and path:
             return FileResponse(file_path)
         return FileResponse(FRONTEND_DIST / "index.html")
@@ -186,12 +230,13 @@ def root():
 
 @app.get("/api/health")
 def health():
+    """健康检查：探测数据库连通性"""
     db_ok = False
     try:
         db = SessionLocal()
         db.execute(text("SELECT 1"))
         db_ok = True
         db.close()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("健康检查数据库连接失败: %s", e)
     return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "disconnected"}

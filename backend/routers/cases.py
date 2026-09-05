@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import Optional
 import uuid
 from datetime import datetime, timedelta
 from database import get_db
-from models import Case, Document, CaseFile, User, CaseDeadline, TeamMember
+from models import Case, User, CaseDeadline, TeamMember
 from schemas import CaseCreate, CaseUpdate, CaseInfo, CaseListResponse
 from auth import get_current_user
 

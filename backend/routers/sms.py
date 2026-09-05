@@ -1,7 +1,11 @@
 """短信验证码 - 阿里云号码认证服务 (dypnsapi)"""
 import time, os, json
+import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
 
 def verify_sms_code(phone: str, code: str) -> bool:
     """供其他模块调用的验证码校验（调阿里云 CheckSmsVerifyCode）"""
@@ -12,7 +16,7 @@ def verify_sms_code(phone: str, code: str) -> bool:
         })
         return result.get("Model", {}).get("VerifyResult") == "PASS"
     except Exception as e:
-        print(f"[SMS] 核验失败: {e}")
+        logger.warning("短信核验失败 phone=%s: %s", phone, e)
         return False
 
 
@@ -61,9 +65,9 @@ def send_sms(req: SendReq):
             "OutId": out_id,
             "CodeLength": 6,
         })
-        print(f"[SMS] 短信已发送到 {phone}")
+        logger.info("短信验证码已发送 phone=%s", phone)
     except Exception as e:
-        print(f"[SMS] 发送失败: {e}")
+        logger.error("短信发送失败 phone=%s: %s", phone, e)
         raise HTTPException(500, f"短信发送失败: {e}")
 
     return {"message": "验证码已发送", "out_id": out_id}

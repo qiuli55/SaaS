@@ -1,3 +1,4 @@
+"""ORM 模型定义：用户/案件/客户/文书/日程/团队/订阅计费等全部表结构。"""
 from sqlalchemy import (
     Column, Integer, String, Text, DECIMAL, Date, DateTime,
     Boolean, ForeignKey, JSON, func
@@ -42,6 +43,7 @@ class Case(Base):
     commission_date = Column(Date, nullable=True)
     description = Column(Text, default="")
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    notes = Column(Text, default="")  # AI 分析结果等附加备注
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
                         onupdate=lambda: datetime.now(timezone.utc))
@@ -214,3 +216,56 @@ class UsageLog(Base):
     created_at = Column(DateTime, default=func.now())
 
     user = relationship("User")
+
+
+class Plan(Base):
+    """订阅套餐定义"""
+    __tablename__ = "plans"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(20), unique=True, nullable=False, index=True)  # free/basic/pro
+    name = Column(String(50), nullable=False)
+    price_monthly = Column(DECIMAL(10, 2), default=0)
+    price_yearly = Column(DECIMAL(10, 2), default=0)
+    daily_limit = Column(Integer, nullable=True)  # None = 不限量
+    features = Column(JSON, default=list)
+    is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
+
+    subscriptions = relationship("Subscription", back_populates="plan")
+
+
+class Subscription(Base):
+    """用户订阅记录（仅保留当前/历史，active 为生效中）"""
+    __tablename__ = "subscriptions"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    plan_id = Column(Integer, ForeignKey("plans.id"), nullable=False)
+    plan_code = Column(String(20), nullable=False)  # 冗余，便于展示
+    status = Column(String(20), default="active")  # active/cancelled/expired
+    period = Column(String(10), default="monthly")  # monthly/yearly
+    start_at = Column(DateTime, default=func.now())
+    end_at = Column(DateTime, nullable=True)  # 过期时间；active 且 end_at 已过则视为失效
+    created_at = Column(DateTime, default=func.now())
+
+    user = relationship("User")
+    plan = relationship("Plan", back_populates="subscriptions")
+
+
+class Order(Base):
+    """购买订单（当前为模拟支付，预留真实支付字段）"""
+    __tablename__ = "orders"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    order_no = Column(String(32), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    plan_id = Column(Integer, ForeignKey("plans.id"), nullable=False)
+    plan_code = Column(String(20), nullable=False)
+    plan_name = Column(String(50), nullable=False)
+    amount = Column(DECIMAL(10, 2), default=0)
+    period = Column(String(10), default="monthly")  # monthly/yearly
+    status = Column(String(20), default="pending")  # pending/paid/cancelled
+    pay_method = Column(String(20), default="mock")  # mock/wxpay/alipay（预留）
+    paid_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now())
+
+    user = relationship("User")
+    plan = relationship("Plan")

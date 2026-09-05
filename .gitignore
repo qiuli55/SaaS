@@ -28,3 +28,26 @@ dist/
 frontend/.npm-cache/
 frontend/dist/
 frontend/node_modules/
+
+# === 优化清理：临时 / 敏感 / 重复文件 ===
+# 数据库备份含 PII，禁止入库
+*.bak
+# 后端调试截图、抓取脚本产物
+backend/*.png
+backend/*.csv
+backend/*.xlsx
+backend/sd.json
+# 陈旧部署残骸与历史打包
+deploy-saas-latest/
+zip-temp/
+# 根目录测试/示例残留
+testpdf*.pdf
+test_api.py
+# 本地工作产物（截图/旧构建/一次性部署包/内置设计稿与文档）
+promo_shots/
+frontend/dist.old-*/
+deploy/fix-package/
+frontend/public/skill/
+合同审查结果_*.md
+小红书_*.md
+测试合同_*.md

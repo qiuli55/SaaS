@@ -14,6 +14,9 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8001',
         changeOrigin: true,
+        // AI 接口响应可能超过默认代理超时，放宽到 240s 避免代理层提前断开
+        timeout: 240000,
+        proxyTimeout: 240000,
       },
     },
   },

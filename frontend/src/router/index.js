@@ -109,6 +109,16 @@ const routes = [
     component: () => import('../views/ProfileView.vue'),
   },
   {
+    path: '/pricing',
+    name: 'Pricing',
+    component: () => import('../views/PricingView.vue'),
+  },
+  {
+    path: '/member',
+    name: 'Member',
+    component: () => import('../views/MemberView.vue'),
+  },
+  {
     path: '/privacy',
     name: 'Privacy',
     component: () => import('../views/PrivacyView.vue'),

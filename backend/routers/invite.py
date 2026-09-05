@@ -1,6 +1,5 @@
 """邀请码管理"""
 import secrets, string
-from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
@@ -47,8 +46,10 @@ def list_codes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """查看所有邀请码"""
-    rows = db.query(InviteCode).order_by(InviteCode.created_at.desc()).all()
+    """仅查看自己创建的邀请码"""
+    rows = db.query(InviteCode).filter(
+        InviteCode.created_by == current_user.id
+    ).order_by(InviteCode.created_at.desc()).all()
     result = []
     for r in rows:
         phone = None
