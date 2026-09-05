@@ -196,7 +196,29 @@ def view_logs(
         return {"error": "数据库不可用"}
 
 
-# 静态前端文件（部署时启用）
+@app.get("/")
+def root():
+    if FRONTEND_DIST.exists():
+        return FileResponse(FRONTEND_DIST / "index.html")
+    return {"name": "Lexi 莱希 API", "version": "1.0.0", "status": "running"}
+
+
+@app.get("/api/health")
+def health():
+    """健康检查：探测数据库连通性"""
+    db_ok = False
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db_ok = True
+        db.close()
+    except Exception as e:
+        logger.warning("健康检查数据库连接失败: %s", e)
+    return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "disconnected"}
+
+
+# 静态前端文件（部署时启用）——必须在所有 API 路由之后注册，
+# 否则 SPA 兜底路由会按注册顺序抢先匹配，遮蔽 /api/health 等后定义的接口
 FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
 if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
@@ -219,24 +241,3 @@ if FRONTEND_DIST.exists():
         if file_path.is_file() and path:
             return FileResponse(file_path)
         return FileResponse(FRONTEND_DIST / "index.html")
-
-
-@app.get("/")
-def root():
-    if FRONTEND_DIST.exists():
-        return FileResponse(FRONTEND_DIST / "index.html")
-    return {"name": "Lexi 莱希 API", "version": "1.0.0", "status": "running"}
-
-
-@app.get("/api/health")
-def health():
-    """健康检查：探测数据库连通性"""
-    db_ok = False
-    try:
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))
-        db_ok = True
-        db.close()
-    except Exception as e:
-        logger.warning("健康检查数据库连接失败: %s", e)
-    return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "disconnected"}
