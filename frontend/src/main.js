@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
+import './assets/lexi-theme.css'
 
 // 清除旧版 Service Worker（PWA 残留导致缓存问题）
 if ('serviceWorker' in navigator) {

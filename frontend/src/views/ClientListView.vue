@@ -1,11 +1,11 @@
 <template>
   <div>
-    <div class="page-header">
+    <div class="page-head">
       <div>
-        <h1 class="page-title">客户通讯录</h1>
-        <span style="font-size:12px;color:var(--accent);margin-left:12px;padding:2px 8px;background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:4px">🔒 数据仅您可见</span>
+        <div class="page-title">客户通讯录</div>
+        <div class="page-sub"><span style="font-size:12px;color:var(--gold-deep);background:rgba(47,107,213,.1);padding:2px 8px;border-radius:4px">🔒 数据仅您可见</span></div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div class="page-actions">
         <button @click="exportExcel" class="btn btn-outline btn-sm">导出 Excel</button>
         <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
           <input type="file" accept=".xlsx,.xls" hidden @change="importExcel" />
@@ -16,38 +16,41 @@
     </div>
 
     <div class="filter-bar">
-      <input v-model="keyword" @input="searchDebounced" type="text" placeholder="搜索客户姓名、电话或公司..." class="form-input" style="width:300px;height:36px" />
+      <label class="search">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5"/><path d="M12 12l4 4"/></svg>
+        <input v-model="keyword" @input="searchDebounced" type="text" placeholder="搜索客户姓名、电话或公司…" />
+      </label>
     </div>
 
-    <div v-if="loading" style="text-align:center;padding:64px;color:var(--text-muted)">加载中...</div>
+    <div v-if="loading" class="empty">加载中...</div>
 
-    <div v-else-if="clients.length === 0" style="text-align:center;padding:64px">
-      <div style="font-size:36px;margin-bottom:12px">👥</div>
-      <div style="color:var(--text-secondary);margin-bottom:20px">暂无客户</div>
-      <router-link to="/clients/new" class="btn btn-accent">添加第一个客户</router-link>
+    <div v-else-if="clients.length === 0" class="empty">
+      <div class="ico">👥</div>
+      <div class="t">暂无客户</div>
+      <router-link to="/clients/new" class="btn btn-gold" style="margin-top:14px">添加第一个客户</router-link>
     </div>
 
-    <div v-else class="grid grid-cols-2 gap-4" style="grid-template-columns:repeat(auto-fill,minmax(360px,1fr))">
-      <div v-for="c in clients" :key="c.id" class="card card-hover" style="display:flex;align-items:center;gap:16px;padding:20px;cursor:pointer" @click="$router.push(`/clients/${c.id}`)">
-        <div style="width:48px;height:48px;border-radius:9999px;background:var(--navy-100);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:var(--navy-700);flex-shrink:0">{{ (c.name || '客')[0] }}</div>
-        <div class="flex-1" style="min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <span style="font-weight:600;color:var(--text-primary)">{{ c.name || '未填写' }}</span>
-            <span v-if="c.tags" style="display:flex;gap:4px"><span v-for="t in parseTags(c.tags)" :key="t" class="badge badge-info" style="font-size:10px">{{ t }}</span></span>
-          </div>
-          <div style="font-size:13px;color:var(--text-secondary)">
-            <span v-if="c.phone">📱 {{ c.phone }}</span>
-            <span v-if="c.phone && c.company"> · </span>
-            <span v-if="c.company">{{ c.company }}</span>
-          </div>
-        </div>
-        <div style="font-size:13px;color:var(--text-muted);flex-shrink:0">{{ c.case_count }}案件</div>
-      </div>
+    <div v-else class="table-wrap">
+      <table class="table">
+        <thead><tr><th>客户</th><th>联系方式</th><th>标签</th><th>关联案件</th><th style="width:90px">操作</th></tr></thead>
+        <tbody>
+          <tr v-for="c in clients" :key="c.id" style="cursor:pointer" @click="$router.push(`/clients/${c.id}`)">
+            <td style="font-weight:600;color:var(--ink)">{{ c.name || '未填写' }}</td>
+            <td style="color:var(--muted)">📱 {{ c.phone || '—' }}<span v-if="c.company" style="margin-left:8px">{{ c.company }}</span></td>
+            <td>
+              <span v-if="!c.tags" style="color:var(--muted)">—</span>
+              <span v-else style="display:flex;gap:4px;flex-wrap:wrap"><span v-for="t in parseTags(c.tags)" :key="t" class="badge b-info" style="font-size:10.5px">{{ t }}</span></span>
+            </td>
+            <td class="mono">{{ c.case_count }} 案</td>
+            <td><button @click.stop="$router.push(`/clients/${c.id}`)" class="btn btn-ghost btn-sm">查看</button></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <div v-if="total > pageSize" style="display:flex;justify-content:center;margin-top:20px;gap:8px">
+    <div v-if="total > pageSize" class="pager">
       <button @click="page--; fetchClients()" :disabled="page<=1" class="btn btn-outline btn-sm">上一页</button>
-      <span style="padding:6px 16px;font-size:13px;color:var(--text-muted)">{{ page }} / {{ Math.ceil(total/pageSize) }}</span>
+      <span class="p-info">{{ page }} / {{ Math.ceil(total/pageSize) }}</span>
       <button @click="page++; fetchClients()" :disabled="page*pageSize>=total" class="btn btn-outline btn-sm">下一页</button>
     </div>
   </div>

@@ -1,26 +1,33 @@
 <template>
   <div>
-    <div class="zone-title"><span class="bar"></span><h2>文书管理</h2></div>
-
-    <div class="seg">
-      <button :class="{ on: filter === '' }" @click="filter = ''">全部</button>
-      <button v-for="t in docTypes" :key="t" :class="{ on: filter === t }" @click="filter = t">{{ t }}</button>
+    <div class="page-head">
+      <div>
+        <div class="page-title">文书列表</div>
+        <div class="page-sub">共 {{ docs.length }} 份文书</div>
+      </div>
     </div>
 
-    <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-muted)">加载中...</div>
-    <div v-else-if="docs.length === 0" style="text-align:center;padding:64px;color:var(--text-muted)">
-      <div style="font-size:48px;margin-bottom:16px">📄</div>
-      <div style="font-size:15px;margin-bottom:12px">暂无文书</div>
-      <router-link to="/cases" class="btn btn-accent btn-sm">前往案件管理生成文书</router-link>
+    <div class="filter-bar">
+      <div class="tabs">
+        <button :class="{ active: filter === '' }" @click="filter = ''" class="tab">全部</button>
+        <button v-for="t in docTypes" :key="t" :class="{ active: filter === t }" @click="filter = t" class="tab">{{ t }}</button>
+      </div>
+    </div>
+
+    <div v-if="loading" class="empty">加载中...</div>
+    <div v-else-if="docs.length === 0" class="empty">
+      <div class="ico">📄</div>
+      <div class="t">暂无文书</div>
+      <router-link to="/cases" class="btn btn-gold btn-sm" style="margin-top:14px">前往案件管理生成文书</router-link>
     </div>
     <div v-else class="doc-grid">
-      <div v-for="d in filteredDocs" :key="d.id" class="doc-card" @click="$router.push(`/documents/${d.id}`)">
+      <div v-for="d in filteredDocs" :key="d.id" class="card card-hover doc-card" @click="$router.push(`/documents/${d.id}`)">
         <div class="dh">
-          <div class="case-ic">{{ (d.doc_type || '文书').slice(0,2) }}</div>
-          <div class="flex-1"><div class="t">{{ d.doc_type }}</div><div class="m">版本 {{ d.version }}</div></div>
-          <span :class="d.status === '已完成' ? 'badge badge-success' : 'badge badge-neutral'">{{ d.status }}</span>
+          <div class="c-mono">{{ (d.doc_type || '文书').slice(0,2) }}</div>
+          <div class="flex-1 min-w-0"><div class="t">{{ d.doc_type }}</div><div class="m">版本 {{ d.version }}</div></div>
+          <span class="badge" :class="d.status === '已完成' ? 'b-success' : 'b-neutral'">{{ d.status }}</span>
         </div>
-        <div class="dm" style="margin-bottom:8px">案件: {{ d.case_name || `#${d.case_id}` }}</div>
+        <div class="dm">案件：{{ d.case_name || `#${d.case_id}` }}</div>
         <div class="acts">
           <a @click.stop="$router.push(`/documents/${d.id}`)">查看</a>
           <a @click.stop="downloadDoc(d)">下载</a>
@@ -28,7 +35,7 @@
       </div>
     </div>
 
-    <div v-if="docs.length > 0" style="text-align:center;margin-top:20px">
+    <div v-if="docs.length > 0" class="pager">
       <button v-if="hasMore" @click="loadMore" class="btn btn-outline btn-sm" :disabled="loadingMore">{{ loadingMore ? '加载中...' : '加载更多' }}</button>
     </div>
   </div>
@@ -76,3 +83,18 @@ function downloadDoc(d) {
 
 onMounted(loadDocuments)
 </script>
+
+<style scoped>
+.doc-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.doc-card{ padding:16px 18px; cursor:pointer; }
+.doc-card .dh{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.doc-card .c-mono{ width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-family:var(--serif); font-weight:600; font-size:14px; color:var(--ink-700); background:var(--paper-2); border:1px solid var(--line); flex-shrink:0; }
+.doc-card .t{ font-weight:600; font-size:14px; color:var(--ink-700); }
+.doc-card .m{ font-size:12px; color:var(--muted); margin-top:1px; }
+.doc-card .dm{ font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+.doc-card .acts{ display:flex; gap:14px; font-size:12.5px; }
+.doc-card .acts a{ color:var(--gold-deep); cursor:pointer; font-weight:500; }
+.doc-card .acts a:hover{ text-decoration:underline; }
+.flex-1{ flex:1; }
+.min-w-0{ min-width:0; }
+</style>

@@ -176,16 +176,18 @@ function onScroll() {}
 </script>
 
 <style>
+/* 悬浮按钮按设计稿 lexi-btn 风格：墨蓝渐变胶囊 + 金点 */
 .float-btn {
   position: fixed; bottom: 28px; right: 28px; z-index: 9998;
-  width: 52px; height: 52px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--navy-600));
+  width: 52px; height: 52px; border-radius: 999px;
+  background: linear-gradient(150deg, var(--ink), var(--ink-700));
   color: #fff; border: none; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(37,99,235,.35);
+  font-family: var(--serif); font-weight: 600; letter-spacing: .04em;
+  box-shadow: 0 12px 30px rgba(21,35,59,.32), inset 0 0 0 1px rgba(47,107,213,.4);
   display: flex; align-items: center; justify-content: center;
-  transition: transform .2s, box-shadow .2s;
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
 }
-.float-btn:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(37,99,235,.5); }
+.float-btn:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(21,35,59,.4); }
 
 .float-panel {
   background: #fff; border-radius: 14px;

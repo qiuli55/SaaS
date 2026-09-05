@@ -1,31 +1,36 @@
 <template>
   <div>
-    <div class="page-header">
-      <div><h1 class="page-title">日历日程</h1></div>
-      <button @click="openAddModal" class="btn btn-accent btn-sm">+ 添加日程</button>
+    <div class="page-head">
+      <div>
+        <div class="page-title">日历日程</div>
+        <div class="page-sub">开庭、举证、立案、上诉期限一目了然</div>
+      </div>
+      <div class="page-actions">
+        <button @click="openAddModal" class="btn btn-gold">+ 添加日程</button>
+      </div>
     </div>
 
     <!-- 月份切换 -->
-    <div class="filter-bar">
+    <div class="cal-bar">
       <button @click="prevMonth" class="btn btn-ghost btn-sm">◀</button>
-      <span style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;color:var(--navy-900);min-width:120px;text-align:center">{{ currentYear }}年 {{ currentMonth }}月</span>
+      <span class="cal-title">{{ currentYear }} 年 {{ currentMonth }} 月</span>
       <button @click="nextMonth" class="btn btn-ghost btn-sm">▶</button>
-      <button @click="goToday" class="btn btn-outline btn-sm" style="margin-left:12px">今天</button>
+      <button @click="goToday" class="btn btn-outline btn-sm" style="margin-left:8px">今天</button>
     </div>
 
     <!-- 日历网格（桌面端） -->
-    <div class="calendar-grid">
-      <div class="calendar-header" v-for="d in ['一','二','三','四','五','六','日']" :key="d">{{ d }}</div>
+    <div class="cal-grid" style="margin-bottom:24px">
+      <div class="cal-dow" v-for="d in ['一','二','三','四','五','六','日']" :key="d">{{ d }}</div>
       <div v-for="(day, i) in calendarDays" :key="i"
-        class="calendar-cell" :class="{ 'other-month': !day.isCurrentMonth, 'today': day.isToday, 'selected': day.date === selectedDate }"
+        class="cal-cell" :class="{ 'other': !day.isCurrentMonth, 'today': day.isToday, 'sel': day.date === selectedDate }"
         @click="day.isCurrentMonth && selectDate(day.date)">
-        <span class="calendar-day">{{ day.day }}</span>
+        <span class="cal-day">{{ day.day }}</span>
         <div v-for="ev in day.events.slice(0, 3)" :key="ev.id"
           @click.stop="editEvent(ev)"
-          class="calendar-event" :class="eventClass(ev.event_type)">
+          class="cal-ev" :class="eventClass(ev.event_type)">
           {{ ev.notes || ev.event_type }}
         </div>
-        <div v-if="day.events.length > 3" style="font-size:10px;color:var(--text-muted);padding:1px 6px">+{{ day.events.length-3 }}更多</div>
+        <div v-if="day.events.length > 3" class="cal-more">+{{ day.events.length-3 }}更多</div>
       </div>
     </div>
 
@@ -36,32 +41,32 @@
           <span>{{ day.weekday }}</span>
           <span class="cal-day-num" :class="{ today: day.isToday }">{{ day.day }}</span>
         </div>
-        <div v-if="!day.events.length" style="font-size:11px;color:var(--text-muted);padding:4px 0">无日程</div>
+        <div v-if="!day.events.length" style="font-size:11px;color:var(--muted);padding:4px 0">无日程</div>
         <div v-for="ev in day.events" :key="ev.id"
           @click.stop="editEvent(ev)"
-          class="calendar-event" :class="eventClass(ev.event_type)">
+          class="cal-ev" :class="eventClass(ev.event_type)">
           {{ ev.notes || ev.event_type }}
         </div>
       </div>
     </div>
 
     <!-- 选中日期日程列表 -->
-    <div v-if="selectedDate" class="card mt-6">
-      <div class="card-header">
+    <div v-if="selectedDate" class="card">
+      <div class="card-head">
         <span class="card-title">{{ selectedDate }} 日程</span>
         <button @click="showAddModal=true; newEvent.event_date=selectedDate+'T09:00'" class="btn btn-ghost btn-sm">+ 添加</button>
       </div>
       <div class="card-body">
-        <div v-if="!selectedEvents.length" style="text-align:center;padding:32px;color:var(--text-muted);font-size:14px">当天无日程安排</div>
-        <div v-for="ev in selectedEvents" :key="ev.id" class="file-item">
+        <div v-if="!selectedEvents.length" style="text-align:center;padding:28px;color:var(--muted);font-size:14px">当天无日程安排</div>
+        <div v-for="ev in selectedEvents" :key="ev.id" class="day-ev">
           <span class="badge" :class="eventBadge(ev.event_type)">{{ ev.event_type }}</span>
-          <div class="file-info">
-            <div class="file-name" :style="{textDecoration:ev.is_done?'line-through':'none',opacity:ev.is_done?0.5:1}">{{ ev.notes || '无备注' }}</div>
-            <div class="file-meta">{{ ev.location }}{{ ev.location&&ev.event_date?' · ':'' }}{{ formatTime(ev.event_date) }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13.5px" :style="{textDecoration:ev.is_done?'line-through':'none',opacity:ev.is_done?0.5:1}">{{ ev.notes || '无备注' }}</div>
+            <div style="font-size:12px;color:var(--muted)">{{ ev.location }}{{ ev.location&&ev.event_date?' · ':'' }}{{ formatTime(ev.event_date) }}</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
-            <button @click="toggleDone(ev)" class="btn btn-ghost btn-sm" :style="{color:ev.is_done?'var(--success)':'var(--text-muted)'}">{{ ev.is_done?'✓ 已完成':'标记完成' }}</button>
-            <button @click="deleteEvent(ev.id)" class="btn btn-ghost btn-sm" style="color:var(--error)">删除</button>
+            <button @click="toggleDone(ev)" class="btn btn-ghost btn-sm" :style="{color:ev.is_done?'var(--ok)':'var(--muted)'}">{{ ev.is_done?'✓ 已完成':'标记完成' }}</button>
+            <button @click="deleteEvent(ev.id)" class="btn btn-ghost btn-sm" style="color:var(--danger)">删除</button>
           </div>
         </div>
       </div>
@@ -70,9 +75,9 @@
     <!-- 添加/编辑弹窗 -->
     <div v-if="showAddModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
-        <div class="modal-header">
+        <div class="modal-head">
           <span class="modal-title">{{ editingId ? '编辑日程' : '添加日程' }}</span>
-          <button @click="closeModal" class="modal-close">
+          <button @click="closeModal" class="modal-x">
             <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l10 10M14 4L4 14"/></svg>
           </button>
         </div>
@@ -82,13 +87,13 @@
               <option>开庭</option><option>举证</option><option>立案</option><option>上诉截止</option><option>待办</option>
             </select>
           </div>
-          <div class="form-group"><label class="form-label">日期时间 <span style="color:var(--error)">*</span></label><input v-model="newEvent.event_date" type="datetime-local" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">日期时间 <span style="color:var(--danger)">*</span></label><input v-model="newEvent.event_date" type="datetime-local" class="form-input" required /></div>
           <div class="form-group"><label class="form-label">地点</label><input v-model="newEvent.location" type="text" placeholder="如：海淀区人民法院 第3法庭" class="form-input" /></div>
           <div class="form-group"><label class="form-label">备注</label><textarea v-model="newEvent.notes" rows="3" placeholder="日程备注" class="form-textarea"></textarea></div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-foot">
           <button @click="closeModal" class="btn btn-outline">取消</button>
-          <button @click="saveEvent" class="btn btn-accent">{{ editingId ? '保存' : '添加' }}</button>
+          <button @click="saveEvent" class="btn btn-gold">{{ editingId ? '保存' : '添加' }}</button>
         </div>
       </div>
     </div>
@@ -191,9 +196,24 @@ async function saveEvent() {
 }
 
 async function toggleDone(ev) { try { await api.put(`/schedules/${ev.id}`,{is_done:!ev.is_done}); await fetchEvents() } catch(e) { alert('操作失败：' + (e?.response?.data?.detail || e.message)) } }
-async function deleteEvent(id) { if(!confirm('确定删除此日程？')) return; try { await api.delete(`/schedules/${id}`); await fetchEvents() } catch(e) { alert('删除失败：' + (e?.response?.data?.detail || e.message)) } }
+async function deleteEvent(id) { if(!confirm('确定删除此日程？')) return; try { await api.delete(`/schedules/${id}`); await fetchEvents() } catch(e) { alert('操作失败：' + (e?.response?.data?.detail || e.message)) } }
 
 function eventClass(t) { const m={开庭:'error',举证:'warning',立案:'info','上诉截止':'error',待办:'neutral'}; return m[t]||'neutral' }
-function eventBadge(t) { const m={开庭:'badge badge-error',举证:'badge badge-warning',立案:'badge badge-info','上诉截止':'badge badge-error',待办:'badge badge-neutral'}; return m[t]||'badge badge-neutral' }
+function eventBadge(t) { const m={开庭:'b-error',举证:'b-warning',立案:'b-info','上诉截止':'b-error',待办:'b-neutral'}; return m[t]||'b-neutral' }
 function formatTime(d) { if(!d) return ''; const dt=new Date(d); return `${dt.getMonth()+1}月${dt.getDate()}日 ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` }
 </script>
+
+<style scoped>
+/* 移动端日程列表（设计稿无对应稿，按同一设计语言延伸） */
+.calendar-mobile-list{ display:none; }
+@media (max-width:680px){
+  .calendar-mobile-list{ display:grid; grid-template-columns:1fr; gap:8px; }
+  .cal-day-card{ background:var(--paper); border:1px solid var(--line); border-radius:11px; padding:10px 12px; cursor:pointer; }
+  .cal-day-header{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .cal-day-num{ font-family:var(--serif); font-weight:600; color:var(--ink); }
+  .cal-day-num.today{ color:var(--gold-deep); }
+  .cal-day-card .cal-ev{ display:block; margin-top:3px; }
+}
+.day-ev{ display:flex; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--line); }
+.day-ev:last-child{ border-bottom:none; }
+</style>

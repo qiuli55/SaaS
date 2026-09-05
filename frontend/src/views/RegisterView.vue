@@ -1,46 +1,73 @@
 <template>
-  <div class="login-page">
-    <div class="login-left">
-      <div class="login-brand"><img src="/lexi-icon.svg" style="width:44px;height:44px;border-radius:8px" alt="Lexi" /><span class="login-brand-text">Lexi 莱希</span></div>
-      <h1 class="login-hero-title">加入 Lexi<br />高效执业</h1>
-      <p class="login-hero-desc">注册账号即可免费体验 AI 文书生成、案件管理、客户通讯录等全部功能。</p>
+  <div class="auth-page">
+    <!-- 左：品牌区 -->
+    <div class="auth-left">
+      <div class="auth-brand">
+        <span class="seal">莱</span>
+        <div>
+          <div class="auth-brand-name">Lexi 莱希</div>
+          <div class="auth-brand-sub">Legal Intelligence</div>
+        </div>
+      </div>
+
+      <div>
+        <h1 class="auth-hero-title">加入 Lexi<br />高效执业</h1>
+        <p class="auth-hero-desc">注册账号即可免费体验 AI 文书生成、案件管理、客户通讯录等全部功能。</p>
+      </div>
+
+      <div class="auth-foot">© 2026 Lexi 莱希 · 让法律服务更高效</div>
     </div>
-    <div class="login-right">
-      <div class="login-form-wrapper">
-        <h2 class="login-form-title">创建账号</h2>
-        <p class="login-form-subtitle">注册后即可开始使用</p>
+
+    <!-- 右：表单 -->
+    <div class="auth-right">
+      <div class="auth-form-wrap">
+        <h2 class="auth-form-title">创建账号</h2>
+        <p class="auth-form-sub">注册后即可开始使用</p>
+
         <form @submit.prevent="handleRegister">
-          <div class="form-group"><label class="form-label">手机号 <span style="color:var(--error)">*</span></label><input v-model="form.phone" type="text" maxlength="11" placeholder="请输入手机号" class="form-input" required /></div>
-          <div class="form-group"><label class="form-label">邀请码 <span style="color:var(--error)">*</span></label><input v-model="form.invite_code" type="text" placeholder="12位邀请码" class="form-input" maxlength="12" style="text-transform:uppercase" required /></div>
-          <div class="form-group"><label class="form-label">密码 <span style="color:var(--error)">*</span></label>
-            <div style="position:relative">
-              <input v-model="form.password" :type="showPwd ? 'text' : 'password'" placeholder="至少6位" class="form-input" required style="padding-right:40px" />
-              <button type="button" @click="showPwd = !showPwd" class="pwd-toggle" :title="showPwd ? '隐藏密码' : '显示密码'">
-                <svg v-if="showPwd" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+          <div class="auth-group">
+            <label class="auth-label">手机号 <span style="color:var(--danger)">*</span></label>
+            <input v-model="form.phone" type="text" maxlength="11" placeholder="请输入手机号" class="auth-input" required />
+          </div>
+          <div class="auth-group">
+            <label class="auth-label">邀请码 <span style="color:var(--danger)">*</span></label>
+            <input v-model="form.invite_code" type="text" maxlength="12" style="text-transform:uppercase" placeholder="12位邀请码" class="auth-input" required />
+          </div>
+          <div class="auth-group">
+            <label class="auth-label">密码 <span style="color:var(--danger)">*</span></label>
+            <div class="auth-pwd">
+              <input v-model="form.password" :type="showPwd ? 'text' : 'password'" placeholder="至少6位" class="auth-input" required />
+              <button type="button" @click="showPwd = !showPwd" class="auth-pwd-toggle" :title="showPwd ? '隐藏密码' : '显示密码'">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
                   <path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="3"/>
-                </svg>
-                <svg v-else viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
-                  <path d="M1 10s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z"/><circle cx="10" cy="10" r="3"/>
-                  <line x1="2" y1="18" x2="18" y2="2"/>
+                  <line v-if="!showPwd" x1="2" y1="18" x2="18" y2="2"/>
                 </svg>
               </button>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">验证码 <span style="color:var(--error)">*</span></label>
-            <div class="sms-wrap">
-              <input v-model="form.code" type="text" placeholder="6位数字验证码" class="form-input" style="flex:1" maxlength="6" />
-              <button type="button" class="btn btn-outline btn-sm" @click="sendCode" :disabled="smsCountdown>0" style="white-space:nowrap">
-                {{ smsCountdown>0 ? smsCountdown+'s' : '获取验证码' }}
+          <div class="auth-group">
+            <label class="auth-label">验证码 <span style="color:var(--danger)">*</span></label>
+            <div class="auth-sms">
+              <input v-model="form.code" type="text" maxlength="6" placeholder="6位数字验证码" class="auth-input" />
+              <button type="button" class="auth-sms-btn" @click="sendCode" :disabled="smsCountdown > 0">
+                {{ smsCountdown > 0 ? smsCountdown + 's' : '获取验证码' }}
               </button>
             </div>
           </div>
-          <div class="form-group"><label class="form-label">姓名 <span style="color:var(--error)">*</span></label><input v-model="form.name" type="text" placeholder="您的真实姓名" class="form-input" required /></div>
-          <div class="form-group"><label class="form-label">律所名称 <span style="color:var(--error)">*</span></label><input v-model="form.firm_name" type="text" placeholder="所在律所" class="form-input" required /></div>
-          <div v-if="error" style="padding:10px;border-radius:6px;background:#fef2f2;color:var(--error);font-size:13px;margin-bottom:16px">{{ error }}</div>
-          <button type="submit" class="btn btn-accent btn-lg" style="width:100%" :disabled="loading">{{ loading?'注册中...':'注册' }}</button>
+          <div class="auth-group">
+            <label class="auth-label">姓名 <span style="color:var(--danger)">*</span></label>
+            <input v-model="form.name" type="text" placeholder="您的真实姓名" class="auth-input" required />
+          </div>
+          <div class="auth-group">
+            <label class="auth-label">律所名称 <span style="color:var(--danger)">*</span></label>
+            <input v-model="form.firm_name" type="text" placeholder="所在律所" class="auth-input" required />
+          </div>
+
+          <div v-if="error" class="auth-error">{{ error }}</div>
+          <button type="submit" class="auth-submit" :disabled="loading">{{ loading ? '注册中...' : '注册' }}</button>
         </form>
-        <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted)">已有账号？<a href="/login" style="color:var(--accent);font-weight:500">立即登录</a></div>
+
+        <div class="auth-switch">已有账号？<a href="/login">立即登录</a></div>
       </div>
     </div>
   </div>
@@ -77,7 +104,3 @@ async function handleRegister() {
   catch(e) { error.value = e.response?.data?.detail||'注册失败' } finally { loading.value = false }
 }
 </script>
-
-<style scoped>
-.sms-wrap { display: flex; gap: 8px; align-items: center }
-</style>

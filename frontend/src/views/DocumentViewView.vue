@@ -1,35 +1,39 @@
 <template>
   <div>
-    <div class="page-header">
-      <div><h1 class="page-title">{{ doc.doc_type }} <span style="font-size:14px;color:var(--text-muted);font-weight:400">V{{ doc.version }}</span></h1>
-        <div style="font-size:13px;color:var(--text-secondary)">{{ doc.case_name }} · {{ formatDate(doc.created_at) }}</div></div>
-      <div style="display:flex;gap:8px">
+    <div class="detail-head">
+      <div>
+        <div class="no">V{{ doc.version }}</div>
+        <div class="nm">{{ doc.doc_type }}</div>
+        <div class="detail-meta">
+          <span>关联案件 <b>{{ doc.case_name || '—' }}</b></span>
+          <span>生成时间 <b>{{ formatDate(doc.created_at) }}</b></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
         <button @click="copyContent" class="btn btn-outline btn-sm">{{ copied?'已复制':'复制文本' }}</button>
-        <button @click="downloadWord" class="btn btn-accent btn-sm">Word</button>
-        <button @click="downloadPdf" class="btn btn-accent btn-sm">PDF</button>
+        <button @click="downloadWord" class="btn btn-gold btn-sm">Word</button>
+        <button @click="downloadPdf" class="btn btn-gold btn-sm">PDF</button>
       </div>
     </div>
 
     <!-- 版本切换 -->
-    <div v-if="versions.length>1" class="card mb-4"><div class="card-body" style="padding:12px 20px">
-      <div style="display:flex;align-items:center;gap:8px;font-size:13px">
-        <span style="color:var(--text-muted)">历史版本：</span>
-        <button v-for="v in versions" :key="v.id" @click="switchVersion(v.id)" style="padding:4px 12px;border-radius:9999px;border:1px solid;font-size:13px;cursor:pointer;transition:all 0.15s"
-          :style="v.id===currentDocId?{background:'var(--navy-100)',borderColor:'var(--navy-400)',color:'var(--navy-700)',fontWeight:500}:{background:'var(--surface-alt)',borderColor:'var(--border)',color:'var(--text-muted)'}">
+    <div v-if="versions.length>1" class="filter-bar">
+      <div class="tabs">
+        <button v-for="v in versions" :key="v.id" @click="switchVersion(v.id)" class="tab" :class="{ active: v.id===currentDocId }">
           V{{ v.version }} ({{ formatDate(v.created_at) }})
         </button>
       </div>
-    </div></div>
+    </div>
 
-    <div v-if="loading" style="text-align:center;padding:64px;color:var(--text-muted)">加载中...</div>
+    <div v-if="loading" class="empty">加载中...</div>
     <template v-else>
-      <div class="card"><div class="card-body"><div class="doc-preview" style="min-height:400px">{{ doc.final_content }}</div></div></div>
+      <div class="card"><div class="card-body"><div class="doc-preview">{{ doc.final_content }}</div></div></div>
 
-      <div v-if="doc.verified_articles?.length" class="card mt-4"><div class="card-body">
-        <div style="background:#ecfdf5;border:1px solid #d1fae5;border-radius:8px;padding:16px 20px">
-          <div style="font-weight:600;color:var(--success);margin-bottom:8px">法条引用校验</div>
-          <div v-for="a in doc.verified_articles" :key="a.law+a.article" style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0">
-            <span>{{ a.verified?'✅':'⚠️' }}</span><span style="font-family:'JetBrains Mono',monospace;color:var(--success)">{{ a.law }}{{ a.article }}</span><span style="color:var(--text-secondary)">— {{ a.verified?'存在':'需人工核实' }}</span>
+      <div v-if="doc.verified_articles?.length" class="card" style="margin-top:20px"><div class="card-body">
+        <div style="background:var(--ok-bg);border:1px solid #cfe7d3;border-radius:10px;padding:14px 18px">
+          <div style="font-weight:600;color:var(--ok);margin-bottom:8px">法条引用校验</div>
+          <div v-for="a in doc.verified_articles" :key="a.law+a.article" style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0">
+            <span>{{ a.verified?'✅':'⚠️' }}</span><span class="mono" style="color:var(--ok)">{{ a.law }}{{ a.article }}</span><span style="color:var(--muted)">— {{ a.verified?'存在':'需人工核实' }}</span>
           </div>
         </div>
       </div></div>
@@ -50,3 +54,10 @@ function downloadWord() { authDownload(`/documents/${currentDocId.value}/downloa
 function downloadPdf() { authDownload(`/documents/${currentDocId.value}/download/pdf`, `${doc.value.doc_type}.pdf`) }
 function formatDate(d) { return d?.slice(0,10)||'' }
 </script>
+
+<style scoped>
+.doc-preview{
+  font-family:var(--serif); line-height:1.9; font-size:14px; color:var(--text);
+  white-space:pre-wrap; word-break:break-word; min-height:400px;
+}
+</style>
