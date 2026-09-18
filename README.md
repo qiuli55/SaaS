@@ -2,7 +2,7 @@
 
 > 把案件管理、合同审查、AI 法律咨询放进同一个工作台，律师的事在系统里办完。
 
-[![Tests](https://img.shields.io/badge/tests-38%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)]()
 [![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688)]()
 [![Vue 3](https://img.shields.io/badge/frontend-Vue%203-42b883)]()
 
@@ -51,7 +51,7 @@ npm run dev
 
 ## 工程化
 
-- pytest 后端测试 38 项全通过（含短信/邀请码注册流程适配）
+- pytest 后端测试 59 项全通过（含短信/邀请码注册流程适配）
 - 所有 AI 依赖均有降级约定：未配 Key 时功能不可用但系统不崩
 - 上传文件统一落盘管理，尺寸限制可配置
 

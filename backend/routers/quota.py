@@ -20,6 +20,16 @@ router = APIRouter(prefix="/api/quota", tags=["配额"])
 DAILY_LIMIT = 50  # 无订阅（免费版）的每日总限额
 
 
+def _today_filter(day):
+    """按本地自然日过滤用量记录。
+
+    UsageLog.created_at 由 func.now() 写入，SQLite 下是 UTC；而 date.today() 是本地日期
+    （服务器 UTC+8）。两者直接比较会在本地 00:00-08:00 之间错位，导致当日计数恒为 0、
+    配额形同失效（2026-09-19 修复）。用 SQLite 的 localtime 修饰符先把 UTC 转成本地再取日期。
+    """
+    return func.date(UsageLog.created_at, "localtime") == day
+
+
 def get_user_daily_limit(user_id: int, db: Session):
     """返回该用户当日限额：付费套餐取 plan.daily_limit（None=不限），无订阅取默认 50。"""
     sub = active_subscription(db, user_id)
@@ -44,7 +54,7 @@ def check_quota(user_id: int, service_type: str, db: Session) -> bool:
     today = date.today()
     count = db.query(UsageLog).filter(
         UsageLog.user_id == user_id,
-        func.date(UsageLog.created_at) == today,
+        _today_filter(today),
     ).count()
 
     if count >= limit:
@@ -65,7 +75,7 @@ def my_usage(
     today = date.today()
     logs = db.query(UsageLog).filter(
         UsageLog.user_id == current_user.id,
-        func.date(UsageLog.created_at) == today,
+        _today_filter(today),
     ).all()
 
     result = UsageInfo(date=str(today), daily_limit=get_user_daily_limit(current_user.id, db))
