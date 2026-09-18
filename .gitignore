@@ -51,3 +51,17 @@ frontend/public/skill/
 合同审查结果_*.md
 小红书_*.md
 测试合同_*.md
+.env.*
+venv/
+node_modules/
+*.pyc
+.gradle/
+build/
+logs/
+uploads/
+outputs/
+.git/
+.frontend-origin
+ssl/
+*.key
+*.pem
