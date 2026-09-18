@@ -256,7 +256,7 @@ async def generate_document(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "deepseek-chat",
+                    "model": "deepseek-v4-flash",
                     "messages": [
                         {"role": "system", "content": sp},
                         {"role": "user", "content": user_prompt},
@@ -273,6 +273,8 @@ async def generate_document(
             raise HTTPException(status_code=502, detail=f"AI 服务异常: {str(e)}")
 
     ai_text = result["choices"][0]["message"]["content"]
+    if not (ai_text or "").strip():
+        raise HTTPException(status_code=502, detail="AI 返回内容为空（输出预算可能被思考链耗尽），请重试")
 
     # 分离文书正文和法条引用
     final_content = ai_text
@@ -388,18 +390,20 @@ async def generate_documents_batch(
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": "deepseek-chat",
+                        "model": "deepseek-v4-flash",
                         "messages": [
                             {"role": "system", "content": sp},
                             {"role": "user", "content": user_prompt},
                         ],
                         "temperature": 0.3,
-                        "max_tokens": 4096,
+                        "max_tokens": 8192,
                     },
                 )
                 resp.raise_for_status()
                 result = resp.json()
                 ai_text = result["choices"][0]["message"]["content"]
+                if not (ai_text or "").strip():
+                    raise RuntimeError("AI 返回内容为空（输出预算可能被思考链耗尽）")
 
                 # 分离正文和法条
                 final_content = ai_text

@@ -38,29 +38,43 @@ if not DEEPSEEK_API_KEY:
 
 
 async def _ask_deepseek(system_prompt: str, user_content: str, api_key: str = None, max_tokens: int = 4000) -> str:
-    """通用 DeepSeek 调用（异步）；被本模块和 law_search.py 复用，改签名需同步 law_search.py"""
+    """通用 DeepSeek 调用（异步）；被本模块和 law_search.py 复用，改签名需同步 law_search.py
+
+    思考型模型（deepseek-v4-flash）的 reasoning token 计入 max_tokens 预算，
+    预算耗尽时 content 为空（finish_reason=length）：自动翻倍重试（上限 64000）。
+    """
     key = api_key or DEEPSEEK_API_KEY
     if not key:
         return "AI 功能未配置，请在 .env 中设置 API Key"
 
-    body = {
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ],
-        # 调低温度提升条款覆盖的稳定性；长度由调用方分块控制，这里不再硬截断
-        "temperature": 0.2,
-        "max_tokens": max_tokens,
-    }
-    async with httpx.AsyncClient(timeout=200) as client:
-        resp = await client.post(
-            DEEPSEEK_URL, json=body,
-            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-        )
-    if resp.status_code != 200:
-        return f"AI 调用失败: {resp.status_code}"
-    return resp.json()["choices"][0]["message"]["content"]
+    limit = max_tokens
+    for _ in range(2):
+        body = {
+            "model": "deepseek-v4-flash",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            # 调低温度提升条款覆盖的稳定性；长度由调用方分块控制，这里不再硬截断
+            "temperature": 0.2,
+            "max_tokens": limit,
+        }
+        async with httpx.AsyncClient(timeout=300) as client:
+            resp = await client.post(
+                DEEPSEEK_URL, json=body,
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            )
+        if resp.status_code != 200:
+            return f"AI 调用失败: {resp.status_code}"
+        choice = resp.json()["choices"][0]
+        content = (choice["message"].get("content") or "").strip()
+        if content:
+            return content
+        logger.warning("DeepSeek 空正文（max_tokens=%s, finish_reason=%s）", limit, choice.get("finish_reason"))
+        if limit >= 64000:
+            break
+        limit *= 2
+    return "AI 调用失败: 返回内容为空（输出预算可能被思考链耗尽），请重试"
 
 
 def _read_case_file_text(cf: CaseFile, limit: int = 5000) -> str:
@@ -159,7 +173,7 @@ async def _chunked_review(content: str, api_key: str, type_hint: str = "") -> st
     """合同审查主入口：短合同单次调用；长合同分块审查后合并，避免后半截被截断漏审。"""
     if len(content) <= 12000:
         # 详细审查报告较长，提高输出 token 上限避免后半截（缺失条款/修改建议/综合评分）被截断
-        return await _ask_deepseek(CONTRACT_SYSTEM_PROMPT, content, api_key, max_tokens=8000)
+        return await _ask_deepseek(CONTRACT_SYSTEM_PROMPT, content, api_key, max_tokens=32000)
     chunks = []
     start = 0
     n = len(content)
@@ -176,10 +190,10 @@ async def _chunked_review(content: str, api_key: str, type_hint: str = "") -> st
             f"暂不打分、不出缺失条款汇总，按 风险点/条款位置/严重程度/法条依据/修改建议 输出。"
             f"用户要求：{type_hint or '全面审查'}）"
         )
-        parts.append(await _ask_deepseek(CONTRACT_CHUNK_PROMPT, ch + hint, api_key, max_tokens=3000))
+        parts.append(await _ask_deepseek(CONTRACT_CHUNK_PROMPT, ch + hint, api_key, max_tokens=16000))
     merged = "\n\n".join(parts)
     synth_user = f"【分块审查片段】\n{merged}\n\n用户整体要求：{type_hint or '全面审查'}"
-    return await _ask_deepseek(CONTRACT_SYNTH_PROMPT, synth_user, api_key, max_tokens=5000)
+    return await _ask_deepseek(CONTRACT_SYNTH_PROMPT, synth_user, api_key, max_tokens=16000)
 
 
 async def _self_check(original: str, review_text: str, api_key: str) -> str:
@@ -189,7 +203,7 @@ async def _self_check(original: str, review_text: str, api_key: str) -> str:
         f"【已生成审查报告】\n{review_text}\n\n请逐条核对原始条款的覆盖情况。"
     )
     try:
-        return await _ask_deepseek(CONTRACT_SELFCHECK_PROMPT, user, api_key, max_tokens=1500)
+        return await _ask_deepseek(CONTRACT_SELFCHECK_PROMPT, user, api_key, max_tokens=6000)
     except Exception as e:
         # 自检是增强步骤，失败不阻断审查报告返回
         logger.warning("合同审查自检失败: %s", e)

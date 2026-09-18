@@ -54,11 +54,11 @@ class ChatRequest(BaseModel):
 async def _deepseek_chat(messages: list) -> tuple[bool, str]:
     """调用 DeepSeek 对话接口，返回 (是否成功, 回复文本或错误文案)。"""
     try:
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
                 DEEPSEEK_URL,
                 headers={"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "deepseek-chat", "messages": messages, "temperature": 0.5, "max_tokens": 2048},
+                json={"model": "deepseek-v4-flash", "messages": messages, "temperature": 0.5, "max_tokens": 8192},
             )
     except httpx.TimeoutException:
         logger.warning("DeepSeek 对话超时（消息 %s 条）", len(messages))
@@ -70,7 +70,11 @@ async def _deepseek_chat(messages: list) -> tuple[bool, str]:
     if resp.status_code != 200:
         logger.warning("DeepSeek 返回 HTTP %s", resp.status_code)
         return False, f"AI 服务异常 (HTTP {resp.status_code})，请稍后重试。"
-    return True, resp.json()["choices"][0]["message"]["content"]
+    content = (resp.json()["choices"][0]["message"].get("content") or "").strip()
+    if not content:
+        logger.warning("DeepSeek 对话返回空正文（输出预算可能被思考链耗尽）")
+        return False, "AI 服务暂时繁忙，请稍后重试。"
+    return True, content
 
 
 @router.post("/send")
@@ -100,10 +104,10 @@ async def chat_send(req: ChatRequest, user=Depends(get_current_user), db: Sessio
     ok, reply = await _deepseek_chat(messages)
     if not ok:
         return {"reply": reply, "error": True}
-    return {"reply": reply, "model": "deepseek-chat"}
+    return {"reply": reply, "model": "deepseek-v4-flash"}
 
 
 @router.get("/health")
 async def chat_health():
     """检查 AI 服务状态"""
-    return {"available": bool(DEEPSEEK_API_KEY), "model": "deepseek-chat", "search": bool(ANYSEARCH_API_KEY)}
+    return {"available": bool(DEEPSEEK_API_KEY), "model": "deepseek-v4-flash", "search": bool(ANYSEARCH_API_KEY)}
