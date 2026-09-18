@@ -100,7 +100,7 @@
     </div>
 
     <!-- 移动端底部导航 -->
-    <nav class="bottom-nav">
+    <div class="bottom-nav">
       <router-link to="/">
         <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8l6-5 6 5v7H3z"/></svg>
         工作台
@@ -121,7 +121,7 @@
         <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 2l1.6 4.2L15 8l-4.4 1.8L9 14l-1.6-4.2L3 8l4.4-1.8z"/></svg>
         Lexi
       </router-link>
-    </nav>
+    </div>
 
     <FloatingChat />
   </div>
