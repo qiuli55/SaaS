@@ -1,36 +1,61 @@
-# Lexi — 面向律所的法律 AI SaaS 平台
+# Lexi — 面向律所的法律 AI SaaS
 
-> 把案件管理、合同审查、AI 法律咨询放进同一个工作台，律师的事在系统里办完。
+> 律师的案件管理、合同审查、AI 咨询原本散在三四个工具里，Lexi 把它们收进一个工作台。
 
-[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)]()
-[![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688)]()
-[![Vue 3](https://img.shields.io/badge/frontend-Vue%203-42b883)]()
+[![Tests](https://github.com/qiuli55/SaaS/actions/workflows/tests.yml/badge.svg)](https://github.com/qiuli55/SaaS/actions/workflows/tests.yml)
+[![FastAPI](https://img.shields.io/badge/backend-FastAPI%200.115-009688)]()
+[![Vue](https://img.shields.io/badge/frontend-Vue%203.5-42b883)]()
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776ab)]()
+
+**在线体验**：[https://lexi.qiuli55.top](https://lexi.qiuli55.top) —— 已生产部署，可直接打开
+
+<!-- 截图待补：建议放一张案件详情页或合同审查页，路径 docs/screenshots/case-detail.png -->
 
 ## 这是什么
 
-**Lexi** 是一个面向律师/律所团队的垂直 SaaS，前后端分离 + PWA，覆盖律所日常核心工作流，并把 AI 能力（DeepSeek）嵌进合同审查、案件分析和法律咨询三个高频场景。
+前后端分离、可安装为 PWA 的垂直 SaaS，覆盖律师与律所团队的日常工作流。后端 FastAPI 按领域拆成 16 个 router，前端 Vue 3；AI 能力（DeepSeek）嵌入合同审查、案件分析、法律咨询三个高频场景。
+
+## 架构
+
+```
+浏览器 / PWA
+    │  HTTPS
+    ▼
+Nginx ─── 静态资源（Vue dist）
+    │  /api/ → 127.0.0.1:8001
+    ▼
+FastAPI（16 router）── JWT 鉴权 · slowapi 限流 · 每日配额校验
+    │
+    ├── SQLAlchemy → SQLite
+    └── httpx ──→ DeepSeek（对话 / 合同审查 / 案件分析）
+              └─→ AnySearch（法律问题联网检索）
+```
 
 ## 核心功能
 
-| 模块 | 说明 |
-|---|---|
-| 📁 案件管理 | 立案 / 编辑 / 详情 / 案件文件上传（50MB 上限），案件材料统一落盘 |
-| 👥 客户管理 | 客户档案与详情视图 |
-| 📄 合同智能审查 | 上传合同 → AI 逐项审查，支持法条引用渲染（法条库缺失时优雅降级） |
-| ⚖️ 案件智能分析 | 案件材料 + 联网检索（AnySearch）辅助分析 |
-| 🤖 AI 法律咨询 | 带律师系统提示词的对话助手：引用具体法条、给可执行步骤、SSE 流式输出 |
-| 📝 文书管理 | 文书生成 / 编辑 / 历史版本查询 |
-| 📅 日程日历 | 日历视图管理排期 |
-| 🏢 团队协作 | 多团队 / 成员邀请（邀请码体系）/ 团队详情 |
-| 🔍 律所名录 | 内置全国律所数据库（爬虫采集 + 清洗入库），模糊搜索 |
-| 🔐 认证与配额 | JWT 登录 + 阿里云短信验证码注册 + 接口限流 + 用户配额管理 |
+- **合同智能审查**：上传合同 → DeepSeek 逐项审查 → 法条引用渲染；词条库缺失时优雅降级，不影响主流程
+- **案件智能分析**：案件材料结合联网检索（AnySearch）辅助分析
+- **AI 法律咨询**：带律师系统提示词的对话助手，引用具体法条、给出可执行步骤
+- **案件 / 客户 / 文书 / 日程管理**：立案、材料上传（默认 50MB，可配置）、文书生成与历史版本
+- **团队协作**：多团队管理、邀请码加入体系
+- **认证与配额**：JWT 登录、短信验证码注册、接口限流、按日配额（免费版 50 次/天，付费按套餐）
+
+## 关键技术难点
+
+1. **AI 依赖全链路降级**：三个 AI 入口各自独立降级——未配 `DEEPSEEK_API_KEY` 时返回友好提示而非 500；法条词条库加载失败返回 `None`，跳过引用渲染；AnySearch 未配 Key 或请求失败返回空串。任一外部依赖挂掉，主流程不受影响，演示不会崩。
+2. **配额统计的时区一致性**：`created_at` 按 UTC 落库，配额却按自然日（东八区）计算，直接比较会差 8 小时——每天 00:00–08:00 之间配额会被错误重置。修复方式是统一用 `func.date(created_at, "localtime")` 归到本地日期。
+3. **外部 API 的超时与异常隔离**：DeepSeek 调用设 45s 超时，并按「超时 / HTTP 错误 / 请求异常」分类捕获、返回不同文案，避免一次外部抖动拖垮接口。
 
 ## 技术栈
 
-- **后端**：Python FastAPI + SQLAlchemy + SQLite，按领域拆分 13 个 router 模块
-- **前端**：Vue 3 + Vite + Tailwind CSS，PWA（可安装到桌面/手机）
-- **AI**：DeepSeek API（对话 / 合同审查 / 案件分析），AnySearch 联网检索
-- **基础设施**：阿里云短信认证、JWT、接口限流（limiter）
+| 层 | 选型 | 说明 |
+|---|---|---|
+| 后端 | FastAPI 0.115 + SQLAlchemy 2.0 | 异步框架 + 自动生成 OpenAPI 文档；按领域拆 router，便于并行开发 |
+| 数据库 | SQLite | 单机部署零运维；ORM 层做隔离，换 PostgreSQL 只需改连接串 |
+| 鉴权 | python-jose (JWT) + bcrypt | 无状态鉴权，密码加盐哈希存储 |
+| 限流 | slowapi | 生产 200 次/天 + 60 次/小时；测试环境自动放宽 |
+| 前端 | Vue 3.5 + Vite 6 + Tailwind 3.4 | 构建快、可安装为 PWA |
+| AI | DeepSeek + AnySearch | 对话 / 审查 / 分析 + 联网检索 |
 
 ## 快速开始
 
@@ -38,7 +63,7 @@
 # 后端
 cd backend
 pip install -r requirements.txt
-cp .env.example .env   # 配置 DEEPSEEK_API_KEY、短信服务密钥
+cp .env.example .env      # 填 DEEPSEEK_API_KEY、短信服务密钥
 uvicorn main:app --reload
 
 # 前端
@@ -47,13 +72,25 @@ npm install
 npm run dev
 ```
 
-`deploy/` 目录提供生产部署方案：前端 dist 构建产物、Windows 一键 `setup.bat`、SSL 配置文档（[SSL-SETUP.md](deploy/SSL-SETUP.md)）。
+## 部署
 
-## 工程化
+`deploy/` 目录提供生产部署方案：前端 dist 构建产物、nginx 配置、Windows 一键 `setup.bat`、SSL 配置文档 [SSL-SETUP.md](deploy/SSL-SETUP.md)。
 
-- pytest 后端测试 59 项全通过（含短信/邀请码注册流程适配）
-- 所有 AI 依赖均有降级约定：未配 Key 时功能不可用但系统不崩
-- 上传文件统一落盘管理，尺寸限制可配置
+线上环境：`https://lexi.qiuli55.top`，Nginx 443 按域名分流 → `127.0.0.1:8001`。
+
+## 测试
+
+```bash
+cd backend && pytest
+```
+
+CI（GitHub Actions）在每次 push 与 PR 时自动执行，59 项全部通过。按文件拆分：
+
+| 文件 | 项数 | 覆盖范围 |
+|---|---|---|
+| `tests/test_api.py` | 38 | 认证 / 案件 / 日程 / 客户 / 文件上传 / 改密 |
+| `tests/test_billing.py` | 10 | 套餐 / 订单 / 模拟支付 / 取消订阅权益保留 / 用量限额 |
+| `tests/test_citation.py` | 11 | 中文数字转换 / 法条条号核验 / 检索接口 |
 
 ## 许可证
 
