@@ -1,0 +1,32 @@
+# 职责：push / PR 时在干净环境跑后端 pytest，验证 59 项测试全通过。
+# 不注入任何密钥——conftest.py 自带 SECRET_KEY 并 mock 短信校验，测试可离线运行。
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: 运行测试
+        run: python -m pytest -v
