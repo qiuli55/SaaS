@@ -1,5 +1,8 @@
-import sqlite3
-db_path = "G:/律师SaaS/backend/legal_ai.db"
+"""预置一批知名律所种子数据，供本地演示与测试使用"""
+import os, sqlite3
+
+# 锚定脚本所在目录：原先写死 G:/ 盘符，Linux 部署时无法打开数据库
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "legal_ai.db")
 conn = sqlite3.connect(db_path)
 
 conn.execute("""CREATE TABLE IF NOT EXISTS law_firms (

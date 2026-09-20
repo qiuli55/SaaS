@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import logging
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -17,8 +18,22 @@ from auth import get_current_user
 from limiter import limiter
 from .quota import check_quota
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(tags=["文书"])
 _TESTING = os.environ.get("TESTING") == "1"
+
+# PDF 中文字体候选：按平台依次探测（Windows 开发机 / Linux 服务器 / macOS）
+# 原先只列 Windows 路径，导致 Linux 部署时找不到字体、中文被降级成乱码
+CN_FONT_CANDIDATES = [
+    "C:/Windows/Fonts/simfang.ttf",
+    "C:/Windows/Fonts/simsunb.ttf",
+    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+    "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+    "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/System/Library/Fonts/PingFang.ttc",
+]
 
 
 def _user_key(request: Request) -> str:
@@ -707,21 +722,20 @@ def download_pdf(
 
         # 尝试使用中文字体
         chinese_font = None
-        font_paths = [
-            "C:/Windows/Fonts/simfang.ttf",
-            "C:/Windows/Fonts/simsunb.ttf",
-        ]
-        for fp in font_paths:
+        for fp in CN_FONT_CANDIDATES:
             if os.path.exists(fp):
                 try:
                     pdf.add_font("CN", "", fp)
                     chinese_font = "CN"
+                    logger.info("PDF 导出使用中文字体: %s", fp)
                     break
-                except Exception:
+                except Exception as e:
+                    logger.warning("字体加载失败，跳过 %s: %s", fp, e)
                     continue
 
         if not chinese_font:
-            # 兜底：返回纯文本 PDF
+            # 兜底：返回纯文本 PDF（中文会变成 ? 或乱码，说明本机缺中文字体）
+            logger.error("未找到可用中文字体，PDF 中文将降级为乱码；请安装 fonts-wqy-microhei")
             pdf.set_font("Helvetica", "", 12)
             for line in doc.final_content.split("\n"):
                 safe = line.strip().encode("latin-1", errors="replace").decode("latin-1")

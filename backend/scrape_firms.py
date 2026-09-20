@@ -1,8 +1,10 @@
 """Playwright DOM直抓：开浏览器→点查询→等结果→从表格提取→翻页"""
-import time, sqlite3
+import os, time, sqlite3
 from playwright.sync_api import sync_playwright
 
-DB = "G:/律师SaaS/backend/legal_ai.db"
+# 锚定脚本所在目录：原先写死 G:/ 盘符，Linux 部署时无法打开数据库
+BASE = os.path.dirname(os.path.abspath(__file__))
+DB = os.path.join(BASE, "legal_ai.db")
 
 
 def main():
@@ -67,11 +69,11 @@ def main():
 
             if not items:
                 print(f"  页{pg}: 0条")
-                page.screenshot(path=f"G:/律师SaaS/backend/page{pg}_empty.png")
+                page.screenshot(path=os.path.join(BASE, f"page{pg}_empty.png"))
                 if pg == 1:
                     print("  首页无数据，尝试保存原始HTML...")
                     html = page.content()
-                    with open(f"G:/律师SaaS/backend/page_source.html", "w", encoding="utf-8") as f:
+                    with open(os.path.join(BASE, "page_source.html"), "w", encoding="utf-8") as f:
                         f.write(html[:50000])
                     print(f"  HTML已保存({len(html)}字符)")
                 break

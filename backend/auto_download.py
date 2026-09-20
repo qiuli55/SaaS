@@ -2,7 +2,10 @@
 import time, os, glob
 from playwright.sync_api import sync_playwright
 
-DOWNLOADS = "G:/律师SaaS/backend/downloads"
+# 锚定脚本所在目录：原先写死 G:/ 盘符，Linux 部署时无法运行
+BASE = os.path.dirname(os.path.abspath(__file__))
+
+DOWNLOADS = os.path.join(BASE, "downloads")
 os.makedirs(DOWNLOADS, exist_ok=True)
 
 # 各省律所数据页面（搜"律师事务所"结果）
@@ -65,7 +68,7 @@ def try_generic(page, name, url):
     time.sleep(5)
 
     # 截图看结果
-    page.screenshot(path=f"G:/律师SaaS/backend/{name}_search.png")
+    page.screenshot(path=os.path.join(BASE, f"{name}_search.png"))
 
 
 def main():
@@ -85,7 +88,7 @@ def main():
             try_shandong(page)
         except Exception as e:
             print(f"  山东失败: {e}")
-            page.screenshot(path="G:/律师SaaS/backend/shandong_error.png")
+            page.screenshot(path=os.path.join(BASE, "shandong_error.png"))
 
         # 等下载完成
         time.sleep(10)

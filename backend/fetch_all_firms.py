@@ -6,7 +6,8 @@
 """
 import httpx, json, sqlite3, time, os
 
-DB_PATH = "G:/律师SaaS/backend/legal_ai.db"
+# 锚定脚本所在目录：原先写死 G:/ 盘符，Linux 部署时无法打开数据库
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "legal_ai.db")
 API_URL = "https://credit.acla.org.cn/api/lawfirm/search"
 
 cities = [

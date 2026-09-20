@@ -2,7 +2,8 @@
 import time, os
 from playwright.sync_api import sync_playwright
 
-DOWNLOAD_DIR = "G:/律师SaaS/backend"
+# 锚定脚本所在目录：原先写死 G:/ 盘符，Linux 部署时无法运行
+DOWNLOAD_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 URL = "https://data.sd.gov.cn/portal/catalog/0ab73b80b2974b128ff9e9e6e857e963"
